@@ -7,6 +7,7 @@
     "apps/*"
   ],
   "scripts": {
+    "build": "npm run build --workspace=@super-monster/mobile",
     "dev:mobile": "npm run dev --workspace=@super-monster/mobile",
     "build:mobile": "npm run build --workspace=@super-monster/mobile",
     "test:engine": "npm run test --workspace=@super-monster/game-engine",
