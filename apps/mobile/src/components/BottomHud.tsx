@@ -1,10 +1,18 @@
-import { PRECEDENCE_META, type CardDefinition } from '@super-monster/game-engine';
+import {
+  HERO_FRAMES,
+  HERO_SKINS,
+  PRECEDENCE_META,
+  getActiveSetBonuses,
+  type CardDefinition,
+  type HeroBuild,
+} from '@super-monster/game-engine';
 import { FastForward, ShieldCheck, Sparkles } from 'lucide-react';
 import { CRYSTAL_ASSETS, UI_ASSETS } from '../assets/assetPaths';
 import { AssetImg } from './AssetImg';
 
 interface BottomHudProps {
   heroName: string;
+  heroBuild?: HeroBuild;
   allyRemaining: number;
   allyMaxTotal: number;
   hand: CardDefinition[];
@@ -18,10 +26,12 @@ interface BottomHudProps {
   canPass: boolean;
   onSelectHandCard: (index: number) => void;
   onPassTurn: () => void;
+  onInspectHero?: () => void;
 }
 
 export function BottomHud({
   heroName,
+  heroBuild,
   allyRemaining,
   allyMaxTotal,
   hand,
@@ -35,8 +45,16 @@ export function BottomHud({
   canPass,
   onSelectHandCard,
   onPassTurn,
+  onInspectHero,
 }: BottomHudProps) {
   const extrasLeftToPlay = Math.max(0, maxExtras - extrasPlayed);
+  const skinUrl =
+    HERO_SKINS.find((s) => s.id === heroBuild?.skinId)?.imageUrl ??
+    UI_ASSETS.heroAlly;
+  const frameUrl =
+    HERO_FRAMES.find((f) => f.id === heroBuild?.frameId)?.imageUrl ??
+    UI_ASSETS.hudPortraitFrameAlly;
+  const activeSetCount = getActiveSetBonuses(heroBuild).length;
 
   return (
     <footer className="relative z-30 hud-leather-bar border-t-2 border-amber-800/90 px-2.5 py-2 overflow-hidden shadow-[0_-8px_22px_rgba(0,0,0,0.85)]">
@@ -49,11 +67,14 @@ export function BottomHud({
       />
 
       <div className="relative z-10 flex items-center justify-between gap-2">
-        {/* Left: Ally Hero Portrait + Dedicated Hero Modifier Socket (prepared for future hero buffs) */}
+        {/* Left: Ally Hero Portrait + Dedicated Hero Modifier Socket (Click to inspect Hero Build & Effects) */}
         <div className="w-[80px] shrink-0 flex flex-col items-center">
-          <div
+          <button
+            type="button"
+            onClick={onInspectHero}
+            title="Ver equipamentos e efeitos do herói"
             className={[
-              'relative w-16 h-16 flex items-center justify-center transition-all duration-300',
+              'relative w-16 h-16 flex items-center justify-center transition-all duration-300 cursor-pointer hover:brightness-110 active:scale-95',
               isPlayerTurn
                 ? 'scale-105 drop-shadow-[0_0_14px_rgba(52,211,153,0.85)]'
                 : 'drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]',
@@ -62,7 +83,7 @@ export function BottomHud({
             {/* Hero Portrait inside the Transparent Window */}
             <div className="absolute inset-[18%] rounded-sm overflow-hidden bg-slate-950">
               <AssetImg
-                src={UI_ASSETS.heroAlly}
+                src={skinUrl}
                 alt={heroName}
                 className="w-full h-full object-cover"
                 fallback={<ShieldCheck className="w-6 h-6 text-amber-300 m-auto" />}
@@ -71,15 +92,15 @@ export function BottomHud({
 
             {/* Stone Claw Frame Overlay */}
             <AssetImg
-              src={UI_ASSETS.hudPortraitFrameAlly}
+              src={frameUrl}
               alt="Moldura do Herói"
               className="pointer-events-none relative z-10 w-full h-full object-contain"
               fallback={null}
             />
 
-            {/* Hero Modifier Socket (Top-Right — ready for future Hero Modifiers like +VEL) */}
+            {/* Hero Modifier Socket (Top-Right — shows active sets / click hint) */}
             <div
-              title="Modificador do Herói (Em breve: bônus passivo de velocidade ou ataque)"
+              title="Toque no herói para ver seus efeitos e conjuntos"
               className="absolute -top-1 -right-1 z-20 w-6 h-6 rounded-full flex items-center justify-center"
             >
               <AssetImg
@@ -92,6 +113,11 @@ export function BottomHud({
                   </span>
                 }
               />
+              {activeSetCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 text-slate-950 text-[8px] font-black flex items-center justify-center shadow">
+                  {activeSetCount}
+                </span>
+              )}
             </div>
 
             {/* Reinforcements Left Counter */}
@@ -101,7 +127,7 @@ export function BottomHud({
             >
               +{extrasLeftToPlay}
             </span>
-          </div>
+          </button>
 
           <div className="w-full mt-0.5 text-center">
             <div className="text-[9px] font-runic text-amber-200 text-outline-sm leading-tight">

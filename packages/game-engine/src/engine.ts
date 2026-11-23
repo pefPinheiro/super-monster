@@ -1,3 +1,10 @@
+import {
+  getActiveSetBonuses,
+  getEquippedItemsList,
+  type HeroBuild,
+  type HeroEffectRule,
+  type HeroEffectTrigger,
+} from './heroItems.ts';
 import { calculatePrecedenceDamage } from './precedence.ts';
 import type {
   BoardMonster,
@@ -122,7 +129,8 @@ function buildInitialPlayer(
   customDeckIds?: string[],
   fixedModifierIds?: [string, string, string],
   statMultiplier = 1,
-  preserveDeckOrder = false
+  preserveDeckOrder = false,
+  heroBuild?: HeroBuild
 ): PlayerState {
   let pool: CardDefinition[];
   if (customDeckIds && customDeckIds.length >= 5) {
@@ -145,6 +153,7 @@ function buildInitialPlayer(
   return {
     side,
     heroName,
+    heroBuild: heroBuild ? structuredClone(heroBuild) : undefined,
     slots: [null, null, null],
     slotModifiers: resolveFixedModifiers(catalog, fixedModifierIds),
     deck: remainingDeck,
@@ -165,6 +174,8 @@ export interface CreateMatchOptions {
   enemyDeckIds?: string[];
   slotModifierIds?: [string, string, string];
   enemyStatMultiplier?: number;
+  playerHeroBuild?: HeroBuild;
+  enemyHeroBuild?: HeroBuild;
 }
 
 export function createMatch(
@@ -175,6 +186,11 @@ export function createMatch(
     catalog.terrains.find((t) => t.id === options.terrainId) ??
     catalog.terrains[Math.floor(Math.random() * catalog.terrains.length)];
 
+  const resolvedPlayerName =
+    options.playerHeroBuild?.heroName?.trim() ||
+    options.playerName ||
+    'Herói Rúnico';
+
   const state: MatchState = {
     phase: 'draft',
     round: 1,
@@ -182,10 +198,13 @@ export function createMatch(
     players: {
       player: buildInitialPlayer(
         'player',
-        options.playerName ?? 'Herói Rúnico',
+        resolvedPlayerName,
         catalog,
         options.playerDeckIds,
-        options.slotModifierIds
+        options.slotModifierIds,
+        1,
+        false,
+        options.playerHeroBuild
       ),
       enemy: buildInitialPlayer(
         'enemy',
@@ -194,7 +213,8 @@ export function createMatch(
         options.enemyDeckIds,
         options.slotModifierIds,
         options.enemyStatMultiplier ?? 1,
-        Boolean(options.enemyDeckIds)
+        Boolean(options.enemyDeckIds),
+        options.enemyHeroBuild
       ),
     },
     activeSide: 'player',
@@ -661,6 +681,129 @@ function triggerPassiveByTrigger(
   }
 }
 
+function matchesHeroTarget(
+  mon: BoardMonster,
+  targetPrecedence?: HeroEffectRule['targetPrecedence']
+): boolean {
+  if (!targetPrecedence) return true;
+  if (Array.isArray(targetPrecedence)) {
+    return targetPrecedence.includes(mon.card.precedence);
+  }
+  return mon.card.precedence === targetPrecedence;
+}
+
+function applyHeroEffectRule(
+  state: MatchState,
+  side: Side,
+  rule: HeroEffectRule
+): void {
+  const p = state.players[side];
+  const oppSide = opponentOf(side);
+
+  if (rule.stat === 'damage_enemies') {
+    let hitCount = 0;
+    for (const slotIdx of [0, 1, 2] as const) {
+      const oppMon = state.players[oppSide].slots[slotIdx];
+      if (!oppMon) continue;
+      applyDamageToMonster(state, oppSide, slotIdx, rule.value);
+      hitCount += 1;
+    }
+    if (hitCount > 0) {
+      addLog(
+        state,
+        `${p.heroName} (${rule.label}): causou ${rule.value} de dano em todos os adversários!`,
+        'attack'
+      );
+    }
+    return;
+  }
+
+  if (rule.stat === 'damage_allies') {
+    let hitCount = 0;
+    for (const slotIdx of [0, 1, 2] as const) {
+      const ally = p.slots[slotIdx];
+      if (!ally || !matchesHeroTarget(ally, rule.targetPrecedence)) continue;
+      applyDamageToMonster(state, side, slotIdx, rule.value);
+      hitCount += 1;
+    }
+    if (hitCount > 0) {
+      addLog(
+        state,
+        `${p.heroName} (${rule.label}): aliados sofreram ${rule.value} de dano.`,
+        'info'
+      );
+    }
+    return;
+  }
+
+  let affected = 0;
+  for (const slotIdx of [0, 1, 2] as const) {
+    const ally = p.slots[slotIdx];
+    if (!ally || !matchesHeroTarget(ally, rule.targetPrecedence)) continue;
+    affected += 1;
+    if (rule.stat === 'atk') {
+      ally.bonusAtk += rule.value;
+    } else if (rule.stat === 'hp') {
+      ally.maxHp += rule.value;
+      ally.currentHp += rule.value;
+    } else if (rule.stat === 'vel') {
+      ally.bonusVel += rule.value;
+    } else if (rule.stat === 'shield') {
+      ally.shield += rule.value;
+    } else if (rule.stat === 'heal') {
+      ally.currentHp = Math.min(ally.maxHp, ally.currentHp + rule.value);
+    }
+  }
+
+  if (affected > 0) {
+    const statText =
+      rule.stat === 'atk'
+        ? `+${rule.value} ATK`
+        : rule.stat === 'hp'
+          ? `+${rule.value} HP`
+          : rule.stat === 'vel'
+            ? `+${rule.value} VEL`
+            : rule.stat === 'shield'
+              ? `+${rule.value} Escudo`
+              : `+${rule.value} HP curado`;
+    addLog(
+      state,
+      `${p.heroName} (${rule.label}): ${statText} nos aliados.`,
+      rule.stat === 'heal' ? 'heal' : 'skill'
+    );
+  }
+}
+
+function applyHeroEffectsForTrigger(
+  state: MatchState,
+  trigger: HeroEffectTrigger
+): void {
+  for (const side of ['player', 'enemy'] as const) {
+    const build = state.players[side].heroBuild;
+    if (!build) continue;
+
+    // 1. Individual equipped item bonuses
+    for (const item of getEquippedItemsList(build)) {
+      if (item.trigger !== trigger) continue;
+      applyHeroEffectRule(state, side, {
+        stat: item.stat,
+        value: item.value,
+        trigger: item.trigger,
+        targetPrecedence: item.targetPrecedence,
+        label: item.name,
+      });
+    }
+
+    // 2. Active Collection Set Bonuses (2, 3 or 4 pieces)
+    for (const bonus of getActiveSetBonuses(build)) {
+      for (const eff of bonus.tier.effects) {
+        if (eff.trigger !== trigger) continue;
+        applyHeroEffectRule(state, side, eff);
+      }
+    }
+  }
+}
+
 function resolveInitiative(state: MatchState): void {
   const playerVel = getSideTotalVel(state, 'player');
   const enemyVel = getSideTotalVel(state, 'enemy');
@@ -755,7 +898,13 @@ export function confirmDraft(
     }
   }
 
+  // Trigger hero items & set bonuses for start_of_match and round 1 start_of_turn
+  applyHeroEffectsForTrigger(state, 'start_of_match');
+  applyHeroEffectsForTrigger(state, 'start_of_turn');
+
   state.phase = 'round_active';
+  if (checkVictoryByElimination(state)) return state;
+
   resolveInitiative(state);
   return state;
 }
@@ -840,6 +989,9 @@ function finishRound(state: MatchState): void {
     }
   }
 
+  // 1a. End-of-round hero items & set bonuses (e.g., Chamas Burn / Raiz Heal)
+  applyHeroEffectsForTrigger(state, 'end_of_turn');
+
   if (checkVictoryByElimination(state)) return;
 
   // 1b. Max 30 rounds limit: whoever has more remaining cards wins; equal cards = draw
@@ -907,6 +1059,9 @@ function finishRound(state: MatchState): void {
       }
     }
   }
+
+  applyHeroEffectsForTrigger(state, 'start_of_turn');
+  if (checkVictoryByElimination(state)) return;
 
   resolveInitiative(state);
 }

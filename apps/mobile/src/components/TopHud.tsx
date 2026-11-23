@@ -19,6 +19,7 @@ interface TopHudProps {
   isAuto: boolean;
   onToggleAuto: () => void;
   onOpenLog: () => void;
+  onInspectEnemyHero?: () => void;
 }
 
 export function TopHud({
@@ -36,6 +37,7 @@ export function TopHud({
   isAuto,
   onToggleAuto,
   onOpenLog,
+  onInspectEnemyHero,
 }: TopHudProps) {
   const [velChanged, setVelChanged] = useState(false);
 
@@ -51,9 +53,12 @@ export function TopHud({
       <div className="hud-stone-bar border-b-2 border-amber-600/45 px-3 py-1.5 flex items-center justify-between gap-2 shadow-[0_6px_18px_rgba(0,0,0,0.85)]">
         {/* Top-Left: Enemy Portrait + Name + Round/Cards */}
         <div className="flex items-center gap-2 min-w-0">
-          <div
+          <button
+            type="button"
+            onClick={onInspectEnemyHero}
+            title="Ver efeitos do herói adversário"
             className={[
-              'relative w-12 h-12 shrink-0 flex items-center justify-center transition-all duration-300',
+              'relative w-12 h-12 shrink-0 flex items-center justify-center transition-all duration-300 cursor-pointer hover:brightness-110 active:scale-95',
               activeSide === 'enemy'
                 ? 'scale-108 drop-shadow-[0_0_14px_rgba(239,68,68,0.95)]'
                 : 'drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]',
@@ -73,7 +78,7 @@ export function TopHud({
               className="pointer-events-none relative z-10 w-full h-full object-contain"
               fallback={null}
             />
-          </div>
+          </button>
 
           <div className="min-w-0 flex flex-col">
             <div className="flex items-center gap-1.5">

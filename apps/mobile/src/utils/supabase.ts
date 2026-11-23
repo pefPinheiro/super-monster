@@ -39,12 +39,14 @@ function getHeaders(): HeadersInit {
 }
 
 import type { SavedDeck } from './decks';
+import type { HeroProfileState } from './heroProfile';
 
 export interface RemotePlayerProfile {
   player_id: string;
   deck_ids: string[];
   saved_decks?: SavedDeck[];
   active_deck_id?: string | null;
+  hero_profile?: HeroProfileState | null;
   completed_stages: string[];
   wins: number;
   losses: number;
@@ -71,6 +73,7 @@ export async function saveProfileToSupabase(data: {
   deckIds: string[];
   savedDecks?: SavedDeck[];
   activeDeckId?: string;
+  heroProfile?: HeroProfileState;
   completedStages: string[];
 }): Promise<void> {
   if (!isSupabaseConfigured()) return;
@@ -87,6 +90,9 @@ export async function saveProfileToSupabase(data: {
     }
     if (data.activeDeckId) {
       payload.active_deck_id = data.activeDeckId;
+    }
+    if (data.heroProfile) {
+      payload.hero_profile = data.heroProfile;
     }
 
     const res = await fetch(`${SUPABASE_URL}/rest/v1/player_profiles`, {

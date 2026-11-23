@@ -74,6 +74,14 @@ export const UI_ASSETS = {
   bgDeckArmory: '/UI/bg_deck_armory.jpg',
   deckSlotEmpty: '/UI/deck_slot_empty.png',
   deckHeaderBanner: '/UI/deck_header_banner.png',
+
+  // 8. Configuração do Herói, Equipamentos e Molduras (Assets opcionais com fallback CSS)
+  bgHeroConfig: '/UI/bg_hero_config.png',
+  bgMenuHeroSanctum: '/UI/bg_menu_hero_sanctum.png',
+  heroSlotArma: '/UI/hero_slot_arma.png',
+  heroSlotElmo: '/UI/hero_slot_elmo.png',
+  heroSlotBotas: '/UI/hero_slot_botas.png',
+  heroSlotAmuleto: '/UI/hero_slot_amuleto.png',
 } as const;
 
 export const CRYSTAL_ASSETS: Record<Precedence, string> = {

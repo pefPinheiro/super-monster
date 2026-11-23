@@ -25,6 +25,7 @@ import { sfx } from '../utils/sfx';
 import { AssetImg } from './AssetImg';
 import { BottomHud } from './BottomHud';
 import { CardInspectModal } from './CardInspectModal';
+import { HeroEffectsModal } from './HeroEffectsModal';
 import { MonsterCard, type CardMotionEffect } from './MonsterCard';
 import { RunicButton } from './RunicButton';
 import { RunicDialog } from './RunicDialog';
@@ -184,6 +185,7 @@ export function BattleArena({
     card: CardDefinition;
     effectiveStats?: { atk: number; hp: number; vel: number; shield?: number };
   } | null>(null);
+  const [inspectHeroSide, setInspectHeroSide] = useState<Side | null>(null);
   const [newlyDrawnCardId, setNewlyDrawnCardId] = useState<string | null>(null);
   const [drawnToastName, setDrawnToastName] = useState<string | null>(null);
   const prevExtrasDrawnRef = useRef<number>(state.players.player.extrasDrawn);
@@ -474,6 +476,10 @@ export function BattleArena({
         isAuto={isAuto}
         onToggleAuto={() => setIsAuto((v) => !v)}
         onOpenLog={() => setShowLog(true)}
+        onInspectEnemyHero={() => {
+          sfx.click();
+          setInspectHeroSide('enemy');
+        }}
       />
 
       {/* Central Arena with Interchangeable Terrain */}
@@ -957,6 +963,7 @@ export function BattleArena({
       {/* Bottom HUD */}
       <BottomHud
         heroName={state.players.player.heroName}
+        heroBuild={state.players.player.heroBuild}
         allyRemaining={allyRem.total}
         allyMaxTotal={allyRem.maxTotal}
         hand={state.players.player.hand}
@@ -976,6 +983,10 @@ export function BattleArena({
         onPassTurn={() => {
           sfx.click();
           onUpdateState(passTurn(state, 'player'));
+        }}
+        onInspectHero={() => {
+          sfx.click();
+          setInspectHeroSide('player');
         }}
       />
 
@@ -1142,6 +1153,26 @@ export function BattleArena({
           card={inspectModalCard.card}
           effectiveStats={inspectModalCard.effectiveStats}
           onClose={() => setInspectModalCard(null)}
+        />
+      )}
+
+      {/* MODAL: Hero Effects & Equipment Inspector */}
+      {inspectHeroSide && (
+        <HeroEffectsModal
+          heroName={state.players[inspectHeroSide].heroName}
+          heroBuild={state.players[inspectHeroSide].heroBuild}
+          fallbackPortraitUrl={
+            inspectHeroSide === 'player'
+              ? UI_ASSETS.heroAlly
+              : UI_ASSETS.heroEnemy
+          }
+          fallbackFrameUrl={
+            inspectHeroSide === 'player'
+              ? UI_ASSETS.hudPortraitFrameAlly
+              : UI_ASSETS.hudPortraitFrameEnemy
+          }
+          isEnemy={inspectHeroSide === 'enemy'}
+          onClose={() => setInspectHeroSide(null)}
         />
       )}
     </div>

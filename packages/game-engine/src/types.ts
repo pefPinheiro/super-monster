@@ -1,3 +1,5 @@
+import type { HeroBuild } from './heroItems.ts';
+
 export type Side = 'player' | 'enemy';
 
 export type Precedence = 'furia' | 'astucia' | 'arcano';
@@ -123,6 +125,7 @@ export interface BoardMonster {
 export interface PlayerState {
   side: Side;
   heroName: string;
+  heroBuild?: HeroBuild;
   slots: [BoardMonster | null, BoardMonster | null, BoardMonster | null];
   slotModifiers: [SlotModifierDefinition, SlotModifierDefinition, SlotModifierDefinition];
   deck: CardDefinition[];

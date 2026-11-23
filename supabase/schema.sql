@@ -19,6 +19,8 @@ alter table public.player_profiles
   add column if not exists saved_decks jsonb not null default '[]'::jsonb;
 alter table public.player_profiles
   add column if not exists active_deck_id text;
+alter table public.player_profiles
+  add column if not exists hero_profile jsonb;
 
 create table if not exists public.match_history (
   id bigint generated always as identity primary key,

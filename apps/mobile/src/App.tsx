@@ -13,6 +13,7 @@ import { CampaignScreen } from './components/CampaignScreen';
 import { DeckManagerScreen } from './components/DeckManagerScreen';
 import { DraftScreen } from './components/DraftScreen';
 import { FullscreenButton } from './components/FullscreenButton';
+import { HeroConfigScreen } from './components/HeroConfigScreen';
 import { TitleScreen } from './components/TitleScreen';
 import {
   DECK_SIZE,
@@ -22,6 +23,12 @@ import {
   sanitizeCardIds,
   type DeckLibraryState,
 } from './utils/decks';
+import {
+  consumeEquippedDurability,
+  loadHeroProfile,
+  saveHeroProfile,
+  type HeroProfileState,
+} from './utils/heroProfile';
 import { setMusicTrack, type MusicTrack } from './utils/music';
 import {
   loadProfileFromSupabase,
@@ -45,12 +52,17 @@ function loadCampaignProgress(): string[] {
 }
 
 export function App() {
-  const [view, setView] = useState<'title' | 'campaign' | 'deck'>('title');
+  const [view, setView] = useState<'title' | 'campaign' | 'deck' | 'hero'>(
+    'title'
+  );
+  const [heroTab, setHeroTab] = useState<'equip' | 'shop'>('equip');
   const [selectedTerrainId, setSelectedTerrainId] = useState<string | 'random'>(
     'random'
   );
   const [deckLibrary, setDeckLibrary] =
     useState<DeckLibraryState>(loadDeckLibrary);
+  const [heroProfile, setHeroProfile] =
+    useState<HeroProfileState>(loadHeroProfile);
   const playerDeckIds = getBattleDeckIds(deckLibrary);
   const [completedStageIds, setCompletedStageIds] = useState<string[]>(
     loadCampaignProgress
@@ -110,6 +122,10 @@ export function App() {
           Array.from(new Set([...prev, ...remote.completed_stages]))
         );
       }
+      if (remote.hero_profile && remote.hero_profile.build) {
+        setHeroProfile(remote.hero_profile);
+        saveHeroProfile(remote.hero_profile);
+      }
     });
     return () => {
       active = false;
@@ -124,11 +140,24 @@ export function App() {
       deckIds: battleIds,
       savedDecks: nextLib.decks,
       activeDeckId: nextLib.activeDeckId,
+      heroProfile,
       completedStages: completedStageIds,
     });
   };
 
-  // Unlock next campaign stage & record match result in Supabase when a match finishes
+  const handleUpdateHeroProfile = (nextProfile: HeroProfileState) => {
+    setHeroProfile(nextProfile);
+    saveHeroProfile(nextProfile);
+    void saveProfileToSupabase({
+      deckIds: playerDeckIds,
+      savedDecks: deckLibrary.decks,
+      activeDeckId: deckLibrary.activeDeckId,
+      heroProfile: nextProfile,
+      completedStages: completedStageIds,
+    });
+  };
+
+  // Unlock next campaign stage, consume item durability, award gold & record match result when a match finishes
   useEffect(() => {
     if (match?.phase !== 'game_over' || !match.winner) return;
 
@@ -140,10 +169,30 @@ export function App() {
       rounds: match.round,
     });
 
+    const rewardGold =
+      match.winner === 'player' ? 120 : match.winner === 'draw' ? 45 : 25;
+    const { nextState: consumedProfile } =
+      consumeEquippedDurability(heroProfile);
+    const updatedProfile: HeroProfileState = {
+      ...consumedProfile,
+      gold: consumedProfile.gold + rewardGold,
+    };
+    setHeroProfile(updatedProfile);
+    saveHeroProfile(updatedProfile);
+
     if (activeCampaignCtx && match.winner === 'player') {
       const stageId = activeCampaignCtx.stage.id;
       setCompletedStageIds((prev) => {
-        if (prev.includes(stageId)) return prev;
+        if (prev.includes(stageId)) {
+          void saveProfileToSupabase({
+            deckIds: playerDeckIds,
+            savedDecks: deckLibrary.decks,
+            activeDeckId: deckLibrary.activeDeckId,
+            heroProfile: updatedProfile,
+            completedStages: prev,
+          });
+          return prev;
+        }
         const next = [...prev, stageId];
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(
@@ -155,9 +204,18 @@ export function App() {
           deckIds: playerDeckIds,
           savedDecks: deckLibrary.decks,
           activeDeckId: deckLibrary.activeDeckId,
+          heroProfile: updatedProfile,
           completedStages: next,
         });
         return next;
+      });
+    } else {
+      void saveProfileToSupabase({
+        deckIds: playerDeckIds,
+        savedDecks: deckLibrary.decks,
+        activeDeckId: deckLibrary.activeDeckId,
+        heroProfile: updatedProfile,
+        completedStages: completedStageIds,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,6 +238,7 @@ export function App() {
     const newMatch = createMatch(DEFAULT_CATALOG, {
       terrainId: selectedTerrainId === 'random' ? undefined : selectedTerrainId,
       playerDeckIds,
+      playerHeroBuild: heroProfile.build,
     });
     setMatch(newMatch);
   };
@@ -196,6 +255,7 @@ export function App() {
       enemyDeckIds: [...stage.enemyCardIds],
       slotModifierIds: stage.slotModifierIds,
       enemyStatMultiplier: stage.enemyStatMultiplier,
+      playerHeroBuild: heroProfile.build,
     });
     setMatch(newMatch);
   };
@@ -241,14 +301,30 @@ export function App() {
               onChangeLibrary={handleUpdateDeckLibrary}
               onBack={() => setView('title')}
             />
+          ) : view === 'hero' ? (
+            <HeroConfigScreen
+              profile={heroProfile}
+              onChangeProfile={handleUpdateHeroProfile}
+              initialTab={heroTab}
+              onBack={() => setView('title')}
+            />
           ) : (
             <TitleScreen
               terrains={DEFAULT_CATALOG.terrains}
               selectedTerrainId={selectedTerrainId}
+              heroProfile={heroProfile}
               onSelectTerrain={setSelectedTerrainId}
               onStartMatch={startSkirmishMatch}
               onOpenCampaign={() => setView('campaign')}
               onOpenDeck={() => setView('deck')}
+              onOpenHeroConfig={() => {
+                setHeroTab('equip');
+                setView('hero');
+              }}
+              onOpenHeroShop={() => {
+                setHeroTab('shop');
+                setView('hero');
+              }}
             />
           )
         ) : match.phase === 'draft' ? (
