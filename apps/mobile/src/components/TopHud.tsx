@@ -1,3 +1,9 @@
+import {
+  HERO_FRAMES,
+  HERO_SKINS,
+  getActiveSetBonuses,
+  type HeroBuild,
+} from '@super-monster/game-engine';
 import { Play, ScrollText, Skull } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { UI_ASSETS } from '../assets/assetPaths';
@@ -7,6 +13,7 @@ import { AssetImg } from './AssetImg';
 interface TopHudProps {
   round: number;
   enemyName: string;
+  enemyHeroBuild?: HeroBuild;
   enemyRemaining: number;
   enemyMaxTotal: number;
   enemyOnBoard: number;
@@ -25,6 +32,7 @@ interface TopHudProps {
 export function TopHud({
   round,
   enemyName,
+  enemyHeroBuild,
   enemyRemaining,
   enemyMaxTotal,
   enemyOnBoard,
@@ -40,6 +48,13 @@ export function TopHud({
   onInspectEnemyHero,
 }: TopHudProps) {
   const [velChanged, setVelChanged] = useState(false);
+  const enemySkinUrl =
+    HERO_SKINS.find((s) => s.id === enemyHeroBuild?.skinId)?.imageUrl ??
+    UI_ASSETS.heroEnemy;
+  const enemyFrameUrl =
+    HERO_FRAMES.find((f) => f.id === enemyHeroBuild?.frameId)?.imageUrl ??
+    UI_ASSETS.hudPortraitFrameEnemy;
+  const enemySetCount = getActiveSetBonuses(enemyHeroBuild).length;
 
   useEffect(() => {
     setVelChanged(true);
@@ -66,18 +81,23 @@ export function TopHud({
           >
             <div className="absolute inset-[19%] rounded-full overflow-hidden bg-slate-950">
               <AssetImg
-                src={UI_ASSETS.heroEnemy}
+                src={enemySkinUrl}
                 alt={enemyName}
                 className="w-full h-full object-cover"
                 fallback={<Skull className="w-5 h-5 text-red-400 m-auto" />}
               />
             </div>
             <AssetImg
-              src={UI_ASSETS.hudPortraitFrameEnemy}
+              src={enemyFrameUrl}
               alt="Moldura do Inimigo"
               className="pointer-events-none relative z-10 w-full h-full object-contain"
               fallback={null}
             />
+            {enemySetCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 z-20 w-3.5 h-3.5 rounded-full bg-rose-500 border border-rose-200 text-white text-[8px] font-black flex items-center justify-center shadow">
+                {enemySetCount}
+              </span>
+            )}
           </button>
 
           <div className="min-w-0 flex flex-col">

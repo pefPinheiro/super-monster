@@ -3,6 +3,7 @@ import {
   HERO_SKINS,
   getActiveSetBonuses,
   getEquippedItemsList,
+  type HeroSlotType,
   type TerrainDefinition,
 } from '@super-monster/game-engine';
 import {
@@ -299,10 +300,16 @@ export function TitleScreen({
             sfx.click();
             onOpenHeroConfig();
           }}
-          className="mt-1.5 w-full max-w-[390px] rounded-2xl border border-amber-500/45 bg-slate-950/75 hover:bg-slate-900/85 hover:border-amber-300 backdrop-blur-md px-3 py-2 flex items-center gap-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.85)] transition cursor-pointer active:scale-[0.99]"
+          className="relative mt-1.5 w-full max-w-[390px] rounded-2xl border border-amber-500/50 bg-slate-950/80 hover:bg-slate-900/90 hover:border-amber-300 backdrop-blur-md px-3 py-2 flex items-center gap-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.85)] transition cursor-pointer active:scale-[0.99] overflow-hidden"
         >
+          <AssetImg
+            src={UI_ASSETS.hudBottomLeather}
+            alt=""
+            className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30"
+            fallback={null}
+          />
           <div
-            className={`relative w-14 h-14 shrink-0 rounded-full flex items-center justify-center ${heroFrame.glowClass}`}
+            className={`relative z-10 w-14 h-14 shrink-0 rounded-full flex items-center justify-center ${heroFrame.glowClass}`}
           >
             <div className="absolute inset-[17%] rounded-full overflow-hidden bg-slate-950">
               <AssetImg
@@ -320,7 +327,7 @@ export function TitleScreen({
             />
           </div>
 
-          <div className="flex-1 min-w-0 text-left">
+          <div className="relative z-10 flex-1 min-w-0 text-left">
             <div className="flex items-center justify-between gap-1.5">
               <span className="font-display text-xs sm:text-sm text-amber-200 truncate text-outline-sm">
                 {heroProfile.build.heroName}
@@ -331,23 +338,58 @@ export function TitleScreen({
               </span>
             </div>
 
-            <div className="mt-0.5 flex items-center gap-1.5 text-[9.5px] text-slate-300">
-              <span>{equippedItems.length}/4 Itens</span>
-              <span>·</span>
-              {activeSets.length > 0 ? (
-                <span className="text-emerald-300 font-semibold flex items-center gap-0.5 truncate">
-                  <Flame className="w-3 h-3 text-orange-400 shrink-0" />
-                  {activeSets.map((s) => s.collection.name).join(', ')}
-                </span>
-              ) : (
-                <span className="text-slate-400 truncate">
-                  Toque para montar build
-                </span>
-              )}
+            {/* 4 Visual Equipment Slots Preview */}
+            <div className="mt-1 flex items-center gap-1.5">
+              {(
+                [
+                  { slot: 'arma' as HeroSlotType, fallbackImg: UI_ASSETS.heroSlotArma },
+                  { slot: 'elmo' as HeroSlotType, fallbackImg: UI_ASSETS.heroSlotElmo },
+                  { slot: 'botas' as HeroSlotType, fallbackImg: UI_ASSETS.heroSlotBotas },
+                  { slot: 'amuleto' as HeroSlotType, fallbackImg: UI_ASSETS.heroSlotAmuleto },
+                ] as const
+              ).map(({ slot, fallbackImg }) => {
+                const eq = heroProfile.build.equipped[slot];
+                return (
+                  <div
+                    key={slot}
+                    className={[
+                      'w-6 h-6 rounded-lg border overflow-hidden flex items-center justify-center bg-slate-950/90',
+                      eq
+                        ? 'border-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.3)]'
+                        : 'border-slate-700/80 opacity-60',
+                    ].join(' ')}
+                  >
+                    <AssetImg
+                      src={eq?.imageUrl ?? fallbackImg}
+                      alt={eq?.name ?? slot}
+                      className="w-full h-full object-cover"
+                      fallback={
+                        <AssetImg
+                          src={fallbackImg}
+                          alt={slot}
+                          className="w-full h-full object-cover opacity-50"
+                          fallback={null}
+                        />
+                      }
+                    />
+                  </div>
+                );
+              })}
+
+              <span className="ml-1 text-[9px] text-slate-300 truncate">
+                {activeSets.length > 0 ? (
+                  <span className="text-emerald-300 font-semibold inline-flex items-center gap-0.5">
+                    <Flame className="w-2.5 h-2.5 text-orange-400 shrink-0" />
+                    {activeSets[0].collection.name}
+                  </span>
+                ) : (
+                  <span className="text-slate-400">{equippedItems.length}/4</span>
+                )}
+              </span>
             </div>
           </div>
 
-          <div className="shrink-0 w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-200">
+          <div className="relative z-10 shrink-0 w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-200">
             <Settings2 className="w-3.5 h-3.5" />
           </div>
         </button>

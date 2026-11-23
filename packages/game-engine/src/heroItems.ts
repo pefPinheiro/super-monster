@@ -28,12 +28,7 @@ export type HeroCollectionId =
   | 'selva'
   | 'sangue'
   | 'gelo'
-  | 'tempestade'
-  | 'solar'
-  | 'sombras'
-  | 'tita'
-  | 'amazonico'
-  | 'templaria';
+  | 'solar';
 
 export interface HeroEffectRule {
   stat: HeroEffectStat;
@@ -62,6 +57,7 @@ export interface HeroCollectionDefinition {
 export interface HeroItem {
   id: string;
   name: string;
+  imageUrl: string;
   slotType: HeroSlotType;
   collectionId: HeroCollectionId;
   rarity: ItemRarity;
@@ -96,6 +92,13 @@ export interface HeroBuild {
   skinId: string;
   frameId: string;
   equipped: Partial<Record<HeroSlotType, HeroItem>>;
+}
+
+export function getEquipmentImageUrl(
+  collectionId: HeroCollectionId,
+  slotType: HeroSlotType
+): string {
+  return `/Equipamentos/${collectionId}_${slotType}.png`;
 }
 
 export const HERO_SLOT_META: Record<
@@ -510,42 +513,6 @@ export const HERO_COLLECTIONS: Record<
       },
     ],
   },
-  tempestade: {
-    id: 'tempestade',
-    name: 'Tempestade Rúnica',
-    themeColor: 'text-indigo-300',
-    badgeBg: 'bg-indigo-500/20 border-indigo-400/60 text-indigo-200',
-    lore: 'Raios que aceleram aliados e atingem o campo inimigo.',
-    tiers: [
-      {
-        requiredPieces: 2,
-        name: 'Passo Relâmpago',
-        description: 'No início do jogo, +12 VEL para todos os aliados.',
-        effects: [
-          {
-            stat: 'vel',
-            value: 12,
-            trigger: 'start_of_match',
-            label: 'Passo Relâmpago',
-          },
-        ],
-      },
-      {
-        requiredPieces: 4,
-        name: 'Trovão Inicial',
-        description:
-          'No início do jogo, causa 24 de dano a todos os inimigos.',
-        effects: [
-          {
-            stat: 'damage_enemies',
-            value: 24,
-            trigger: 'start_of_match',
-            label: 'Trovão Inicial',
-          },
-        ],
-      },
-    ],
-  },
   solar: {
     id: 'solar',
     name: 'Ouro Solar',
@@ -589,156 +556,6 @@ export const HERO_COLLECTIONS: Record<
             value: 16,
             trigger: 'start_of_match',
             label: 'Glória Dourada',
-          },
-        ],
-      },
-    ],
-  },
-  sombras: {
-    id: 'sombras',
-    name: 'Sombras do Abismo',
-    themeColor: 'text-violet-300',
-    badgeBg: 'bg-violet-500/20 border-violet-400/60 text-violet-200',
-    lore: 'Emboscada sombria que enfraquece adversários desde o início.',
-    tiers: [
-      {
-        requiredPieces: 2,
-        name: 'Golpe das Sombras',
-        description:
-          'No início do jogo, causa 20 de dano a todos os inimigos.',
-        effects: [
-          {
-            stat: 'damage_enemies',
-            value: 20,
-            trigger: 'start_of_match',
-            label: 'Golpe das Sombras',
-          },
-        ],
-      },
-      {
-        requiredPieces: 3,
-        name: 'Sussurro Sombrio',
-        description: 'No início do turno, +10 ATK para todos os aliados.',
-        effects: [
-          {
-            stat: 'atk',
-            value: 10,
-            trigger: 'start_of_turn',
-            label: 'Sussurro Sombrio',
-          },
-        ],
-      },
-    ],
-  },
-  tita: {
-    id: 'tita',
-    name: 'Titã de Pedra',
-    themeColor: 'text-stone-300',
-    badgeBg: 'bg-stone-500/25 border-stone-400/60 text-stone-200',
-    lore: 'Vitalidade colossal e escudos renovados ao fim do turno.',
-    tiers: [
-      {
-        requiredPieces: 2,
-        name: 'Corpo Colossal',
-        description: 'No início do jogo, +35 HP para todos os aliados.',
-        effects: [
-          {
-            stat: 'hp',
-            value: 35,
-            trigger: 'start_of_match',
-            label: 'Corpo Colossal',
-          },
-        ],
-      },
-      {
-        requiredPieces: 4,
-        name: 'Bastião Eterno',
-        description: 'No fim do turno, +25 de Escudo para todos os aliados.',
-        effects: [
-          {
-            stat: 'shield',
-            value: 25,
-            trigger: 'end_of_turn',
-            label: 'Bastião Eterno',
-          },
-        ],
-      },
-    ],
-  },
-  amazonico: {
-    id: 'amazonico',
-    name: 'Espírito Amazônico',
-    themeColor: 'text-teal-300',
-    badgeBg: 'bg-teal-500/20 border-teal-400/60 text-teal-200',
-    lore: 'Proteção espiritual das águas e florestas antigas.',
-    tiers: [
-      {
-        requiredPieces: 2,
-        name: 'Canto de Cura',
-        description: 'No fim do turno, recupera +15 HP de todos os aliados.',
-        effects: [
-          {
-            stat: 'heal',
-            value: 15,
-            trigger: 'end_of_turn',
-            label: 'Canto de Cura',
-          },
-        ],
-      },
-      {
-        requiredPieces: 3,
-        name: 'Sopro dos Espíritos',
-        description:
-          'No início do jogo, +12 VEL para aliados de Astúcia e Arcano.',
-        effects: [
-          {
-            stat: 'vel',
-            value: 12,
-            trigger: 'start_of_match',
-            targetPrecedence: ['astucia', 'arcano'],
-            label: 'Sopro dos Espíritos',
-          },
-        ],
-      },
-    ],
-  },
-  templaria: {
-    id: 'templaria',
-    name: 'Ordem Templária',
-    themeColor: 'text-yellow-200',
-    badgeBg: 'bg-yellow-500/20 border-yellow-400/60 text-yellow-100',
-    lore: 'Disciplina sagrada que une ataque, defesa e regeneração.',
-    tiers: [
-      {
-        requiredPieces: 2,
-        name: 'Voto Sagrado',
-        description:
-          'No início do jogo, +20 Escudo e +10 ATK para todos os aliados.',
-        effects: [
-          {
-            stat: 'shield',
-            value: 20,
-            trigger: 'start_of_match',
-            label: 'Voto Sagrado',
-          },
-          {
-            stat: 'atk',
-            value: 10,
-            trigger: 'start_of_match',
-            label: 'Espada Consagrada',
-          },
-        ],
-      },
-      {
-        requiredPieces: 4,
-        name: 'Luz Redentora',
-        description: 'No fim do turno, recupera +20 HP de todos os aliados.',
-        effects: [
-          {
-            stat: 'heal',
-            value: 20,
-            trigger: 'end_of_turn',
-            label: 'Luz Redentora',
           },
         ],
       },
@@ -853,7 +670,8 @@ export const HERO_FRAMES: HeroFrameDefinition[] = [
 
 export function formatItemEffect(item: HeroItem): string {
   const statLabel = STAT_LABELS[item.stat];
-  const sign = item.stat === 'damage_enemies' || item.stat === 'damage_allies' ? '' : '+';
+  const sign =
+    item.stat === 'damage_enemies' || item.stat === 'damage_allies' ? '' : '+';
   const target = item.targetPrecedence
     ? ` (${item.targetPrecedence.toUpperCase()})`
     : ' (todos aliados)';
@@ -872,7 +690,9 @@ export function getEquippedItemsList(build?: HeroBuild | null): HeroItem[] {
   if (!build) return [];
   return (['arma', 'elmo', 'botas', 'amuleto'] as HeroSlotType[])
     .map((slot) => build.equipped[slot])
-    .filter((item): item is HeroItem => Boolean(item && item.remainingDurability > 0));
+    .filter(
+      (item): item is HeroItem => Boolean(item && item.remainingDurability > 0)
+    );
 }
 
 export function getCollectionCounts(
@@ -905,60 +725,545 @@ export function getActiveSetBonuses(
   return active;
 }
 
+export type HeroItemTemplate = Omit<HeroItem, 'id' | 'remainingDurability'>;
+
+/**
+ * All 40 equipment pieces (10 Collections × 4 Slots), each with its own dedicated imageUrl.
+ */
+export const HERO_SHOP_CATALOG: HeroItemTemplate[] = [
+  // 1. Chamas
+  {
+    name: 'Lâmina das Chamas',
+    imageUrl: getEquipmentImageUrl('chamas', 'arma'),
+    slotType: 'arma',
+    collectionId: 'chamas',
+    rarity: 'basico',
+    stat: 'atk',
+    value: 5,
+    trigger: 'start_of_turn',
+    maxDurability: 50,
+    price: 150,
+  },
+  {
+    name: 'Elmo das Chamas',
+    imageUrl: getEquipmentImageUrl('chamas', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'chamas',
+    rarity: 'basico',
+    stat: 'hp',
+    value: 20,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 150,
+  },
+  {
+    name: 'Botas da Fornalha',
+    imageUrl: getEquipmentImageUrl('chamas', 'botas'),
+    slotType: 'botas',
+    collectionId: 'chamas',
+    rarity: 'epico',
+    stat: 'vel',
+    value: 11,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Amuleto da Brasa',
+    imageUrl: getEquipmentImageUrl('chamas', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'chamas',
+    rarity: 'lendario',
+    stat: 'damage_enemies',
+    value: 20,
+    trigger: 'end_of_turn',
+    maxDurability: 65,
+    price: 850,
+  },
+
+  // 2. Bastião de Ferro
+  {
+    name: 'Martelo de Ferro',
+    imageUrl: getEquipmentImageUrl('ferro', 'arma'),
+    slotType: 'arma',
+    collectionId: 'ferro',
+    rarity: 'epico',
+    stat: 'atk',
+    value: 12,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Elmo de Ferro',
+    imageUrl: getEquipmentImageUrl('ferro', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'ferro',
+    rarity: 'basico',
+    stat: 'hp',
+    value: 22,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 150,
+  },
+  {
+    name: 'Grevas do Bastião',
+    imageUrl: getEquipmentImageUrl('ferro', 'botas'),
+    slotType: 'botas',
+    collectionId: 'ferro',
+    rarity: 'basico',
+    stat: 'vel',
+    value: 6,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Amuleto Égide',
+    imageUrl: getEquipmentImageUrl('ferro', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'ferro',
+    rarity: 'lendario',
+    stat: 'shield',
+    value: 40,
+    trigger: 'start_of_match',
+    maxDurability: 65,
+    price: 850,
+  },
+
+  // 3. Vento Cortante
+  {
+    name: 'Sabre do Vendaval',
+    imageUrl: getEquipmentImageUrl('vento', 'arma'),
+    slotType: 'arma',
+    collectionId: 'vento',
+    rarity: 'epico',
+    stat: 'atk',
+    value: 11,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Capuz da Brisa',
+    imageUrl: getEquipmentImageUrl('vento', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'vento',
+    rarity: 'basico',
+    stat: 'hp',
+    value: 18,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Botas do Vento',
+    imageUrl: getEquipmentImageUrl('vento', 'botas'),
+    slotType: 'botas',
+    collectionId: 'vento',
+    rarity: 'basico',
+    stat: 'vel',
+    value: 7,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Talismã do Furacão',
+    imageUrl: getEquipmentImageUrl('vento', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'vento',
+    rarity: 'lendario',
+    stat: 'vel',
+    value: 18,
+    trigger: 'start_of_match',
+    maxDurability: 65,
+    price: 850,
+  },
+
+  // 4. Raiz Ancestral
+  {
+    name: 'Cajado da Raiz',
+    imageUrl: getEquipmentImageUrl('raiz', 'arma'),
+    slotType: 'arma',
+    collectionId: 'raiz',
+    rarity: 'basico',
+    stat: 'atk',
+    value: 7,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Elmo de Musgo',
+    imageUrl: getEquipmentImageUrl('raiz', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'raiz',
+    rarity: 'basico',
+    stat: 'hp',
+    value: 24,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 150,
+  },
+  {
+    name: 'Botas da Floresta',
+    imageUrl: getEquipmentImageUrl('raiz', 'botas'),
+    slotType: 'botas',
+    collectionId: 'raiz',
+    rarity: 'epico',
+    stat: 'vel',
+    value: 10,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Amuleto da Seiva',
+    imageUrl: getEquipmentImageUrl('raiz', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'raiz',
+    rarity: 'epico',
+    stat: 'heal',
+    value: 16,
+    trigger: 'end_of_turn',
+    maxDurability: 50,
+    price: 380,
+  },
+
+  // 5. Éter Arcano
+  {
+    name: 'Cajado de Éter',
+    imageUrl: getEquipmentImageUrl('arcano', 'arma'),
+    slotType: 'arma',
+    collectionId: 'arcano',
+    rarity: 'epico',
+    stat: 'atk',
+    value: 15,
+    trigger: 'start_of_match',
+    targetPrecedence: 'arcano',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Diadema Arcano',
+    imageUrl: getEquipmentImageUrl('arcano', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'arcano',
+    rarity: 'lendario',
+    stat: 'hp',
+    value: 55,
+    trigger: 'start_of_match',
+    targetPrecedence: 'arcano',
+    maxDurability: 65,
+    price: 850,
+  },
+  {
+    name: 'Botas de Mana',
+    imageUrl: getEquipmentImageUrl('arcano', 'botas'),
+    slotType: 'botas',
+    collectionId: 'arcano',
+    rarity: 'epico',
+    stat: 'vel',
+    value: 12,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Orbe do Éter',
+    imageUrl: getEquipmentImageUrl('arcano', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'arcano',
+    rarity: 'lendario',
+    stat: 'damage_enemies',
+    value: 22,
+    trigger: 'start_of_match',
+    maxDurability: 65,
+    price: 850,
+  },
+
+  // 6. Fúria Nórdica
+  {
+    name: 'Machado de Asgard',
+    imageUrl: getEquipmentImageUrl('nordica', 'arma'),
+    slotType: 'arma',
+    collectionId: 'nordica',
+    rarity: 'lendario',
+    stat: 'atk',
+    value: 22,
+    trigger: 'start_of_match',
+    targetPrecedence: 'furia',
+    maxDurability: 65,
+    price: 850,
+  },
+  {
+    name: 'Elmo de Valhalla',
+    imageUrl: getEquipmentImageUrl('nordica', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'nordica',
+    rarity: 'epico',
+    stat: 'hp',
+    value: 38,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Botas do Berserker',
+    imageUrl: getEquipmentImageUrl('nordica', 'botas'),
+    slotType: 'botas',
+    collectionId: 'nordica',
+    rarity: 'epico',
+    stat: 'vel',
+    value: 11,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Runa da Fúria',
+    imageUrl: getEquipmentImageUrl('nordica', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'nordica',
+    rarity: 'basico',
+    stat: 'atk',
+    value: 8,
+    trigger: 'start_of_match',
+    targetPrecedence: 'furia',
+    maxDurability: 45,
+    price: 150,
+  },
+
+  // 7. Astúcia da Selva
+  {
+    name: 'Garras da Selva',
+    imageUrl: getEquipmentImageUrl('selva', 'arma'),
+    slotType: 'arma',
+    collectionId: 'selva',
+    rarity: 'epico',
+    stat: 'atk',
+    value: 13,
+    trigger: 'start_of_match',
+    targetPrecedence: 'astucia',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Máscara Tribal',
+    imageUrl: getEquipmentImageUrl('selva', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'selva',
+    rarity: 'basico',
+    stat: 'hp',
+    value: 22,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Botas da Pantera',
+    imageUrl: getEquipmentImageUrl('selva', 'botas'),
+    slotType: 'botas',
+    collectionId: 'selva',
+    rarity: 'epico',
+    stat: 'vel',
+    value: 14,
+    trigger: 'start_of_match',
+    targetPrecedence: 'astucia',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Totem da Mata',
+    imageUrl: getEquipmentImageUrl('selva', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'selva',
+    rarity: 'lendario',
+    stat: 'heal',
+    value: 20,
+    trigger: 'end_of_turn',
+    maxDurability: 65,
+    price: 850,
+  },
+
+  // 8. Pacto Carmesim
+  {
+    name: 'Espada Carmesim',
+    imageUrl: getEquipmentImageUrl('sangue', 'arma'),
+    slotType: 'arma',
+    collectionId: 'sangue',
+    rarity: 'epico',
+    stat: 'atk',
+    value: 14,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Elmo Rubro',
+    imageUrl: getEquipmentImageUrl('sangue', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'sangue',
+    rarity: 'epico',
+    stat: 'hp',
+    value: 34,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Botas de Sangue',
+    imageUrl: getEquipmentImageUrl('sangue', 'botas'),
+    slotType: 'botas',
+    collectionId: 'sangue',
+    rarity: 'basico',
+    stat: 'vel',
+    value: 6,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Cálice de Sangue',
+    imageUrl: getEquipmentImageUrl('sangue', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'sangue',
+    rarity: 'lendario',
+    stat: 'damage_enemies',
+    value: 25,
+    trigger: 'start_of_match',
+    maxDurability: 60,
+    price: 850,
+  },
+
+  // 9. Gelo Eterno
+  {
+    name: 'Lança Glacial',
+    imageUrl: getEquipmentImageUrl('gelo', 'arma'),
+    slotType: 'arma',
+    collectionId: 'gelo',
+    rarity: 'basico',
+    stat: 'atk',
+    value: 7,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Elmo Glacial',
+    imageUrl: getEquipmentImageUrl('gelo', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'gelo',
+    rarity: 'epico',
+    stat: 'hp',
+    value: 35,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+  {
+    name: 'Botas da Geada',
+    imageUrl: getEquipmentImageUrl('gelo', 'botas'),
+    slotType: 'botas',
+    collectionId: 'gelo',
+    rarity: 'basico',
+    stat: 'vel',
+    value: 7,
+    trigger: 'start_of_match',
+    maxDurability: 45,
+    price: 150,
+  },
+  {
+    name: 'Amuleto Invernal',
+    imageUrl: getEquipmentImageUrl('gelo', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'gelo',
+    rarity: 'lendario',
+    stat: 'shield',
+    value: 35,
+    trigger: 'start_of_match',
+    maxDurability: 65,
+    price: 850,
+  },
+
+  // 10. Ouro Solar
+  {
+    name: 'Espada Solar',
+    imageUrl: getEquipmentImageUrl('solar', 'arma'),
+    slotType: 'arma',
+    collectionId: 'solar',
+    rarity: 'lendario',
+    stat: 'atk',
+    value: 20,
+    trigger: 'start_of_match',
+    maxDurability: 65,
+    price: 850,
+  },
+  {
+    name: 'Coroa Solar',
+    imageUrl: getEquipmentImageUrl('solar', 'elmo'),
+    slotType: 'elmo',
+    collectionId: 'solar',
+    rarity: 'lendario',
+    stat: 'hp',
+    value: 60,
+    trigger: 'start_of_match',
+    maxDurability: 65,
+    price: 850,
+  },
+  {
+    name: 'Botas Douradas',
+    imageUrl: getEquipmentImageUrl('solar', 'botas'),
+    slotType: 'botas',
+    collectionId: 'solar',
+    rarity: 'lendario',
+    stat: 'vel',
+    value: 16,
+    trigger: 'start_of_match',
+    maxDurability: 65,
+    price: 850,
+  },
+  {
+    name: 'Medalhão do Sol',
+    imageUrl: getEquipmentImageUrl('solar', 'amuleto'),
+    slotType: 'amuleto',
+    collectionId: 'solar',
+    rarity: 'epico',
+    stat: 'shield',
+    value: 28,
+    trigger: 'start_of_match',
+    maxDurability: 50,
+    price: 380,
+  },
+];
+
+export function generateHeroShopCatalog(): HeroItemTemplate[] {
+  return HERO_SHOP_CATALOG;
+}
+
+function instantiateTemplate(
+  tpl: HeroItemTemplate,
+  idPrefix: string
+): HeroItem {
+  return {
+    ...tpl,
+    id: `${idPrefix}-${tpl.collectionId}-${tpl.slotType}`,
+    remainingDurability: tpl.maxDurability,
+  };
+}
+
 export function createStarterHeroItems(): HeroItem[] {
+  const byKey = (col: HeroCollectionId, slot: HeroSlotType) =>
+    HERO_SHOP_CATALOG.find(
+      (i) => i.collectionId === col && i.slotType === slot
+    )!;
+
   return [
-    {
-      id: 'starter-arma-chamas',
-      name: 'Espada das Chamas',
-      slotType: 'arma',
-      collectionId: 'chamas',
-      rarity: 'basico',
-      stat: 'atk',
-      value: 5,
-      trigger: 'start_of_turn',
-      maxDurability: 50,
-      remainingDurability: 50,
-      price: 150,
-    },
-    {
-      id: 'starter-elmo-chamas',
-      name: 'Elmo das Chamas',
-      slotType: 'elmo',
-      collectionId: 'chamas',
-      rarity: 'basico',
-      stat: 'hp',
-      value: 20,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      remainingDurability: 50,
-      price: 150,
-    },
-    {
-      id: 'starter-botas-vento',
-      name: 'Botas do Vento',
-      slotType: 'botas',
-      collectionId: 'vento',
-      rarity: 'basico',
-      stat: 'vel',
-      value: 6,
-      trigger: 'start_of_match',
-      maxDurability: 45,
-      remainingDurability: 45,
-      price: 150,
-    },
-    {
-      id: 'starter-amuleto-ferro',
-      name: 'Amuleto do Bastião',
-      slotType: 'amuleto',
-      collectionId: 'ferro',
-      rarity: 'basico',
-      stat: 'shield',
-      value: 18,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      remainingDurability: 50,
-      price: 150,
-    },
+    instantiateTemplate(byKey('chamas', 'arma'), 'starter'),
+    instantiateTemplate(byKey('chamas', 'elmo'), 'starter'),
+    instantiateTemplate(byKey('vento', 'botas'), 'starter'),
+    instantiateTemplate(byKey('ferro', 'amuleto'), 'starter'),
   ];
 }
 
@@ -977,327 +1282,83 @@ export function createDefaultHeroBuild(): HeroBuild {
   };
 }
 
-export function generateHeroShopCatalog(): Omit<
-  HeroItem,
-  'id' | 'remainingDurability'
->[] {
-  const items: Omit<HeroItem, 'id' | 'remainingDurability'>[] = [
-    // Chamas
-    {
-      name: 'Lâmina das Chamas',
-      slotType: 'arma',
-      collectionId: 'chamas',
-      rarity: 'basico',
-      stat: 'atk',
-      value: 5,
-      trigger: 'start_of_turn',
-      maxDurability: 50,
-      price: 150,
+/**
+ * Generates a themed Enemy Hero Build for Campaign stages, scaling equipped pieces
+ * from 1-2 items on early stages up to a full 4-piece set on Boss stages.
+ */
+export function createCampaignEnemyHeroBuild(params: {
+  enemyName: string;
+  collectionId: HeroCollectionId;
+  stageNumber: 1 | 2 | 3 | 4 | 5;
+  skinId?: string;
+  frameId?: string;
+}): HeroBuild {
+  const colItems = HERO_SHOP_CATALOG.filter(
+    (i) => i.collectionId === params.collectionId
+  );
+  const slotOrder: HeroSlotType[] = ['arma', 'elmo', 'botas', 'amuleto'];
+  const count =
+    params.stageNumber === 1
+      ? 1
+      : params.stageNumber === 2
+        ? 2
+        : params.stageNumber <= 4
+          ? 3
+          : 4;
+
+  const equipped: Partial<Record<HeroSlotType, HeroItem>> = {};
+  for (let idx = 0; idx < count; idx += 1) {
+    const slot = slotOrder[idx];
+    const tpl = colItems.find((i) => i.slotType === slot);
+    if (tpl) {
+      equipped[slot] = instantiateTemplate(
+        tpl,
+        `camp-s${params.stageNumber}`
+      );
+    }
+  }
+
+  return {
+    heroName: params.enemyName,
+    skinId: params.skinId ?? 'senhor_abismo',
+    frameId:
+      params.frameId ??
+      (params.stageNumber === 5 ? 'frame_lendario' : 'frame_inimigo'),
+    equipped,
+  };
+}
+
+/**
+ * Generates a random Enemy Hero Build for Skirmish / Random matches.
+ */
+export function generateRandomEnemyHeroBuild(
+  enemyName = 'Lorde Glacial'
+): HeroBuild {
+  const skin = HERO_SKINS[Math.floor(Math.random() * HERO_SKINS.length)];
+  const frame = HERO_FRAMES[Math.floor(Math.random() * HERO_FRAMES.length)];
+  const colIds = Object.keys(HERO_COLLECTIONS) as HeroCollectionId[];
+  const primaryCol = colIds[Math.floor(Math.random() * colIds.length)];
+  const secondaryCol = colIds[Math.floor(Math.random() * colIds.length)];
+
+  const pickForSlot = (slot: HeroSlotType, col: HeroCollectionId) => {
+    const tpl = HERO_SHOP_CATALOG.find(
+      (i) => i.collectionId === col && i.slotType === slot
+    );
+    return tpl ? instantiateTemplate(tpl, 'rand-enemy') : undefined;
+  };
+
+  return {
+    heroName: enemyName,
+    skinId: skin.id,
+    frameId: frame.id,
+    equipped: {
+      arma: pickForSlot('arma', primaryCol),
+      elmo: pickForSlot('elmo', primaryCol),
+      botas: pickForSlot('botas', secondaryCol),
+      amuleto:
+        Math.random() > 0.35
+          ? pickForSlot('amuleto', secondaryCol)
+          : undefined,
     },
-    {
-      name: 'Machado Vulcânico',
-      slotType: 'arma',
-      collectionId: 'chamas',
-      rarity: 'epico',
-      stat: 'atk',
-      value: 12,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 380,
-    },
-    {
-      name: 'Amuleto da Brasa',
-      slotType: 'amuleto',
-      collectionId: 'chamas',
-      rarity: 'lendario',
-      stat: 'damage_enemies',
-      value: 20,
-      trigger: 'end_of_turn',
-      maxDurability: 65,
-      price: 850,
-    },
-    // Bastião de Ferro
-    {
-      name: 'Elmo de Ferro',
-      slotType: 'elmo',
-      collectionId: 'ferro',
-      rarity: 'basico',
-      stat: 'hp',
-      value: 20,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 150,
-    },
-    {
-      name: 'Coroa do Bastião',
-      slotType: 'elmo',
-      collectionId: 'ferro',
-      rarity: 'epico',
-      stat: 'hp',
-      value: 38,
-      trigger: 'start_of_match',
-      maxDurability: 55,
-      price: 380,
-    },
-    {
-      name: 'Amuleto Égide',
-      slotType: 'amuleto',
-      collectionId: 'ferro',
-      rarity: 'lendario',
-      stat: 'shield',
-      value: 40,
-      trigger: 'start_of_match',
-      maxDurability: 65,
-      price: 850,
-    },
-    // Vento Cortante
-    {
-      name: 'Botas Aladas',
-      slotType: 'botas',
-      collectionId: 'vento',
-      rarity: 'basico',
-      stat: 'vel',
-      value: 6,
-      trigger: 'start_of_match',
-      maxDurability: 45,
-      price: 150,
-    },
-    {
-      name: 'Grevas da Brisa',
-      slotType: 'botas',
-      collectionId: 'vento',
-      rarity: 'epico',
-      stat: 'vel',
-      value: 12,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 380,
-    },
-    {
-      name: 'Talismã do Furacão',
-      slotType: 'amuleto',
-      collectionId: 'vento',
-      rarity: 'lendario',
-      stat: 'vel',
-      value: 18,
-      trigger: 'start_of_match',
-      maxDurability: 65,
-      price: 850,
-    },
-    // Raiz Ancestral
-    {
-      name: 'Elmo de Musgo',
-      slotType: 'elmo',
-      collectionId: 'raiz',
-      rarity: 'basico',
-      stat: 'hp',
-      value: 22,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 150,
-    },
-    {
-      name: 'Amuleto da Seiva',
-      slotType: 'amuleto',
-      collectionId: 'raiz',
-      rarity: 'epico',
-      stat: 'heal',
-      value: 16,
-      trigger: 'end_of_turn',
-      maxDurability: 50,
-      price: 380,
-    },
-    // Éter Arcano
-    {
-      name: 'Cajado de Éter',
-      slotType: 'arma',
-      collectionId: 'arcano',
-      rarity: 'epico',
-      stat: 'atk',
-      value: 15,
-      trigger: 'start_of_match',
-      targetPrecedence: 'arcano',
-      maxDurability: 50,
-      price: 380,
-    },
-    {
-      name: 'Diadema Arcano',
-      slotType: 'elmo',
-      collectionId: 'arcano',
-      rarity: 'lendario',
-      stat: 'hp',
-      value: 55,
-      trigger: 'start_of_match',
-      targetPrecedence: 'arcano',
-      maxDurability: 65,
-      price: 850,
-    },
-    // Fúria Nórdica
-    {
-      name: 'Machado de Asgard',
-      slotType: 'arma',
-      collectionId: 'nordica',
-      rarity: 'lendario',
-      stat: 'atk',
-      value: 22,
-      trigger: 'start_of_match',
-      targetPrecedence: 'furia',
-      maxDurability: 65,
-      price: 850,
-    },
-    {
-      name: 'Botas do Berserker',
-      slotType: 'botas',
-      collectionId: 'nordica',
-      rarity: 'epico',
-      stat: 'vel',
-      value: 11,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 380,
-    },
-    // Pacto Carmesim
-    {
-      name: 'Espada Carmesim',
-      slotType: 'arma',
-      collectionId: 'sangue',
-      rarity: 'epico',
-      stat: 'atk',
-      value: 14,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 380,
-    },
-    {
-      name: 'Cálice de Sangue',
-      slotType: 'amuleto',
-      collectionId: 'sangue',
-      rarity: 'lendario',
-      stat: 'damage_enemies',
-      value: 25,
-      trigger: 'start_of_match',
-      maxDurability: 60,
-      price: 850,
-    },
-    // Gelo Eterno
-    {
-      name: 'Elmo Glacial',
-      slotType: 'elmo',
-      collectionId: 'gelo',
-      rarity: 'epico',
-      stat: 'hp',
-      value: 35,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 380,
-    },
-    {
-      name: 'Botas da Geada',
-      slotType: 'botas',
-      collectionId: 'gelo',
-      rarity: 'basico',
-      stat: 'vel',
-      value: 7,
-      trigger: 'start_of_match',
-      maxDurability: 45,
-      price: 150,
-    },
-    // Ouro Solar
-    {
-      name: 'Coroa Solar',
-      slotType: 'elmo',
-      collectionId: 'solar',
-      rarity: 'lendario',
-      stat: 'hp',
-      value: 60,
-      trigger: 'start_of_match',
-      maxDurability: 65,
-      price: 850,
-    },
-    {
-      name: 'Botas Douradas',
-      slotType: 'botas',
-      collectionId: 'solar',
-      rarity: 'lendario',
-      stat: 'vel',
-      value: 16,
-      trigger: 'start_of_match',
-      maxDurability: 65,
-      price: 850,
-    },
-    // Sombras do Abismo
-    {
-      name: 'Adaga Abissal',
-      slotType: 'arma',
-      collectionId: 'sombras',
-      rarity: 'epico',
-      stat: 'atk',
-      value: 13,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 380,
-    },
-    // Titã de Pedra
-    {
-      name: 'Elmo do Titã',
-      slotType: 'elmo',
-      collectionId: 'tita',
-      rarity: 'lendario',
-      stat: 'hp',
-      value: 65,
-      trigger: 'start_of_match',
-      maxDurability: 65,
-      price: 850,
-    },
-    // Espírito Amazônico
-    {
-      name: 'Amuleto da Floresta',
-      slotType: 'amuleto',
-      collectionId: 'amazonico',
-      rarity: 'epico',
-      stat: 'heal',
-      value: 15,
-      trigger: 'end_of_turn',
-      maxDurability: 50,
-      price: 380,
-    },
-    // Ordem Templária
-    {
-      name: 'Espada Templária',
-      slotType: 'arma',
-      collectionId: 'templaria',
-      rarity: 'epico',
-      stat: 'atk',
-      value: 12,
-      trigger: 'start_of_match',
-      maxDurability: 50,
-      price: 380,
-    },
-    // Astúcia da Selva
-    {
-      name: 'Botas da Pantera',
-      slotType: 'botas',
-      collectionId: 'selva',
-      rarity: 'epico',
-      stat: 'vel',
-      value: 12,
-      trigger: 'start_of_match',
-      targetPrecedence: 'astucia',
-      maxDurability: 50,
-      price: 380,
-    },
-    // Tempestade Rúnica
-    {
-      name: 'Lança do Trovão',
-      slotType: 'arma',
-      collectionId: 'tempestade',
-      rarity: 'lendario',
-      stat: 'atk',
-      value: 20,
-      trigger: 'start_of_match',
-      maxDurability: 65,
-      price: 850,
-    },
-  ];
-  return items;
+  };
 }

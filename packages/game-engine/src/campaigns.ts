@@ -1,4 +1,9 @@
-import type { CampaignDefinition } from './types.ts';
+import {
+  createCampaignEnemyHeroBuild,
+  type HeroBuild,
+  type HeroCollectionId,
+} from './heroItems.ts';
+import type { CampaignDefinition, CampaignStageDefinition } from './types.ts';
 
 /**
  * 5 Campanhas Oficiais de Guerra — Super Monster.
@@ -546,3 +551,52 @@ export const DEFAULT_CAMPAIGNS: CampaignDefinition[] = [
     ],
   },
 ];
+
+const CAMPAIGN_HERO_THEMES: Record<
+  string,
+  { collectionId: HeroCollectionId; skinId: string; frameId: string }
+> = {
+  'camp-1-cerco-geleira': {
+    collectionId: 'gelo',
+    skinId: 'guerreiro_valhalla',
+    frameId: 'frame_gelo',
+  },
+  'camp-2-invasao-selva': {
+    collectionId: 'raiz',
+    skinId: 'guardiao_amazonia',
+    frameId: 'frame_floresta',
+  },
+  'camp-3-marcha-cinzas': {
+    collectionId: 'chamas',
+    skinId: 'senhor_abismo',
+    frameId: 'frame_chamas',
+  },
+  'camp-4-sol-sombrio': {
+    collectionId: 'arcano',
+    skinId: 'senhor_abismo',
+    frameId: 'frame_sombras',
+  },
+  'camp-5-guerra-deuses': {
+    collectionId: 'solar',
+    skinId: 'guardiao_runico',
+    frameId: 'frame_lendario',
+  },
+};
+
+export function getCampaignEnemyHeroBuild(
+  campaign: CampaignDefinition,
+  stage: CampaignStageDefinition
+): HeroBuild {
+  const theme = CAMPAIGN_HERO_THEMES[campaign.id] ?? {
+    collectionId: 'ferro' as HeroCollectionId,
+    skinId: 'senhor_abismo',
+    frameId: 'frame_inimigo',
+  };
+  return createCampaignEnemyHeroBuild({
+    enemyName: stage.enemyName,
+    collectionId: theme.collectionId,
+    stageNumber: stage.stageNumber,
+    skinId: theme.skinId,
+    frameId: stage.isBoss ? 'frame_lendario' : theme.frameId,
+  });
+}

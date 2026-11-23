@@ -181,12 +181,21 @@ export function HeroEffectsModal({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <AssetImg
-                          src={MOD_STAT_ASSETS[item.stat]}
-                          alt={item.stat}
-                          className="w-4 h-4 object-contain shrink-0"
-                          fallback={<SlotIcon className="w-3.5 h-3.5 text-amber-300 shrink-0" />}
-                        />
+                        <div className="w-7 h-7 rounded-lg overflow-hidden border border-amber-400/40 bg-slate-950 shrink-0 flex items-center justify-center">
+                          <AssetImg
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            fallback={
+                              <AssetImg
+                                src={MOD_STAT_ASSETS[item.stat]}
+                                alt={item.stat}
+                                className="w-4 h-4 object-contain"
+                                fallback={<SlotIcon className="w-3.5 h-3.5 text-amber-300" />}
+                              />
+                            }
+                          />
+                        </div>
                         <span className="font-display text-xs text-white truncate">
                           {item.name}
                         </span>

@@ -3,6 +3,8 @@ import {
   chooseAiDraft,
   confirmDraft,
   createMatch,
+  generateRandomEnemyHeroBuild,
+  getCampaignEnemyHeroBuild,
   type CampaignDefinition,
   type CampaignStageDefinition,
   type MatchState,
@@ -239,6 +241,7 @@ export function App() {
       terrainId: selectedTerrainId === 'random' ? undefined : selectedTerrainId,
       playerDeckIds,
       playerHeroBuild: heroProfile.build,
+      enemyHeroBuild: generateRandomEnemyHeroBuild('Desafiante Rúnico'),
     });
     setMatch(newMatch);
   };
@@ -256,6 +259,7 @@ export function App() {
       slotModifierIds: stage.slotModifierIds,
       enemyStatMultiplier: stage.enemyStatMultiplier,
       playerHeroBuild: heroProfile.build,
+      enemyHeroBuild: getCampaignEnemyHeroBuild(campaign, stage),
     });
     setMatch(newMatch);
   };

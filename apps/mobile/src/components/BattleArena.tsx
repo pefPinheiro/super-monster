@@ -464,6 +464,7 @@ export function BattleArena({
       <TopHud
         round={state.round}
         enemyName={state.players.enemy.heroName}
+        enemyHeroBuild={state.players.enemy.heroBuild}
         enemyRemaining={enemyRem.total}
         enemyMaxTotal={enemyRem.maxTotal}
         enemyOnBoard={enemyRem.onBoard}

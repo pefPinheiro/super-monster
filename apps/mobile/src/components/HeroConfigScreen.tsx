@@ -9,6 +9,7 @@ import {
   generateHeroShopCatalog,
   getActiveSetBonuses,
   getCollectionCounts,
+  type HeroCollectionId,
   type HeroItem,
   type HeroSlotType,
 } from '@super-monster/game-engine';
@@ -73,6 +74,9 @@ export function HeroConfigScreen({
 }: HeroConfigScreenProps) {
   const [activeTab, setActiveTab] = useState<ConfigTab>(initialTab);
   const [slotFilter, setSlotFilter] = useState<HeroSlotType | 'all'>('all');
+  const [collectionFilter, setCollectionFilter] = useState<
+    HeroCollectionId | 'all'
+  >('all');
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(profile.build.heroName);
   const [toast, setToast] = useState<string | null>(null);
@@ -187,13 +191,19 @@ export function HeroConfigScreen({
     showToast('Moldura desbloqueada e equipada!');
   };
 
-  const filteredInventory = profile.inventory.filter((i) =>
-    slotFilter === 'all' ? true : i.slotType === slotFilter
-  );
+  const filteredInventory = profile.inventory.filter((i) => {
+    if (slotFilter !== 'all' && i.slotType !== slotFilter) return false;
+    if (collectionFilter !== 'all' && i.collectionId !== collectionFilter)
+      return false;
+    return true;
+  });
 
-  const filteredShop = shopCatalog.filter((i) =>
-    slotFilter === 'all' ? true : i.slotType === slotFilter
-  );
+  const filteredShop = shopCatalog.filter((i) => {
+    if (slotFilter !== 'all' && i.slotType !== slotFilter) return false;
+    if (collectionFilter !== 'all' && i.collectionId !== collectionFilter)
+      return false;
+    return true;
+  });
 
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-[#090c14] text-slate-100 select-none">
@@ -220,20 +230,26 @@ export function HeroConfigScreen({
       )}
 
       {/* TOP BAR */}
-      <header className="relative z-20 shrink-0 px-3 pt-2.5 pb-2 border-b border-amber-500/20 bg-slate-950/85 backdrop-blur-md flex items-center justify-between gap-2">
+      <header className="relative z-20 shrink-0 px-3 pt-2.5 pb-2 border-b border-amber-500/25 bg-slate-950/90 backdrop-blur-md flex items-center justify-between gap-2 overflow-hidden">
+        <AssetImg
+          src={UI_ASSETS.hudTopHeader}
+          alt=""
+          className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-35"
+          fallback={null}
+        />
         <button
           type="button"
           onClick={() => {
             sfx.click();
             onBack();
           }}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl hud-stone-bar border border-slate-600/80 hover:border-amber-400 text-xs font-runic text-slate-100 cursor-pointer active:scale-95 transition"
+          className="relative z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl hud-stone-bar border border-slate-600/80 hover:border-amber-400 text-xs font-runic text-slate-100 cursor-pointer active:scale-95 transition"
         >
           <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
           <span>Voltar</span>
         </button>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/50 text-amber-200 text-xs font-runic">
+        <div className="relative z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full hud-stone-bar border border-amber-400/60 text-amber-200 text-xs font-runic">
           <Coins className="w-3.5 h-3.5 text-amber-300" />
           <span>{profile.gold}</span>
         </div>
@@ -356,12 +372,29 @@ export function HeroConfigScreen({
                   selected ? 'ring-2 ring-amber-400' : '',
                 ].join(' ')}
               >
-                <AssetImg
-                  src={SLOT_ASSET_MAP[slot]}
-                  alt=""
-                  className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30"
-                  fallback={null}
-                />
+                {item ? (
+                  <AssetImg
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-55"
+                    fallback={
+                      <AssetImg
+                        src={SLOT_ASSET_MAP[slot]}
+                        alt=""
+                        className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30"
+                        fallback={null}
+                      />
+                    }
+                  />
+                ) : (
+                  <AssetImg
+                    src={SLOT_ASSET_MAP[slot]}
+                    alt=""
+                    className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-45"
+                    fallback={null}
+                  />
+                )}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-950/55" />
                 <div className="relative z-10 flex items-center justify-between gap-0.5">
                   <span className="text-[8.5px] font-runic uppercase text-amber-200/90 flex items-center gap-0.5">
                     <SlotIcon slot={slot} className="w-2.5 h-2.5" />
@@ -409,12 +442,12 @@ export function HeroConfigScreen({
         </div>
       </section>
 
-      {/* NAVIGATION TABS */}
+      {/* TAB NAVIGATION */}
       <nav className="relative z-10 shrink-0 px-3 pt-2.5 pb-1.5 grid grid-cols-4 gap-1.5">
         {(
           [
             { id: 'equip', label: 'Mochila', icon: Backpack },
-            { id: 'sets', label: '15 Conjuntos', icon: Flame },
+            { id: 'sets', label: '10 Coleções', icon: Flame },
             { id: 'shop', label: 'Mercado', icon: ShoppingBag },
             { id: 'appearance', label: 'Visual', icon: Palette },
           ] as const
@@ -443,35 +476,72 @@ export function HeroConfigScreen({
         })}
       </nav>
 
-      {/* SLOT FILTER PILLS (for Equip & Shop) */}
+      {/* SLOT & COLLECTION FILTER PILLS (for Equip & Shop) */}
       {(activeTab === 'equip' || activeTab === 'shop') && (
-        <div className="relative z-10 shrink-0 px-3 pb-2 flex items-center gap-1 overflow-x-auto no-scrollbar">
-          {(
-            [
-              { id: 'all', label: 'Todos Slots' },
-              { id: 'arma', label: 'Arma (ATK)' },
-              { id: 'elmo', label: 'Elmo (HP)' },
-              { id: 'botas', label: 'Botas (VEL)' },
-              { id: 'amuleto', label: 'Amuleto' },
-            ] as const
-          ).map((f) => (
+        <div className="relative z-10 shrink-0 px-3 pb-2 space-y-1.5">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+            {(
+              [
+                { id: 'all', label: 'Todos Slots' },
+                { id: 'arma', label: 'Arma (ATK)' },
+                { id: 'elmo', label: 'Elmo (HP)' },
+                { id: 'botas', label: 'Botas (VEL)' },
+                { id: 'amuleto', label: 'Amuleto' },
+              ] as const
+            ).map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => {
+                  sfx.click();
+                  setSlotFilter(f.id);
+                }}
+                className={[
+                  'shrink-0 px-2.5 py-1 rounded-lg border text-[9.5px] font-runic cursor-pointer transition',
+                  slotFilter === f.id
+                    ? 'bg-sky-500/25 border-sky-400 text-sky-100'
+                    : 'bg-slate-900/70 border-slate-700 text-slate-400',
+                ].join(' ')}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
             <button
-              key={f.id}
               type="button"
               onClick={() => {
                 sfx.click();
-                setSlotFilter(f.id);
+                setCollectionFilter('all');
               }}
               className={[
-                'shrink-0 px-2.5 py-1 rounded-lg border text-[9.5px] font-runic cursor-pointer transition',
-                slotFilter === f.id
-                  ? 'bg-sky-500/25 border-sky-400 text-sky-100'
+                'shrink-0 px-2 py-0.5 rounded-lg border text-[9px] font-runic cursor-pointer transition',
+                collectionFilter === 'all'
+                  ? 'bg-amber-500/25 border-amber-400 text-amber-100'
                   : 'bg-slate-900/70 border-slate-700 text-slate-400',
               ].join(' ')}
             >
-              {f.label}
+              Todas Coleções
             </button>
-          ))}
+            {HERO_COLLECTION_LIST.map((col) => (
+              <button
+                key={col.id}
+                type="button"
+                onClick={() => {
+                  sfx.click();
+                  setCollectionFilter(col.id);
+                }}
+                className={[
+                  'shrink-0 px-2 py-0.5 rounded-lg border text-[9px] font-runic cursor-pointer transition',
+                  collectionFilter === col.id
+                    ? `${col.badgeBg} ring-1 ring-amber-300/60`
+                    : 'bg-slate-900/70 border-slate-700 text-slate-400',
+                ].join(' ')}
+              >
+                {col.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -505,12 +575,19 @@ export function HeroConfigScreen({
                     key={item.id}
                     className={`rounded-2xl border ${rarity.borderClass} ${rarity.bgClass} p-2.5 flex items-center justify-between gap-2.5`}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-slate-950/80 border border-slate-700/80 p-1 shrink-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-xl bg-slate-950/90 border border-amber-500/35 overflow-hidden shrink-0 flex items-center justify-center">
                       <AssetImg
-                        src={MOD_STAT_ASSETS[item.stat]}
-                        alt={item.stat}
-                        className="w-full h-full object-contain"
-                        fallback={<SlotIcon slot={item.slotType} className="w-5 h-5 text-amber-300" />}
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        fallback={
+                          <AssetImg
+                            src={MOD_STAT_ASSETS[item.stat]}
+                            alt={item.stat}
+                            className="w-9 h-9 object-contain"
+                            fallback={<SlotIcon slot={item.slotType} className="w-5 h-5 text-amber-300" />}
+                          />
+                        }
                       />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -626,12 +703,19 @@ export function HeroConfigScreen({
                   key={`${tpl.name}-${idx}`}
                   className={`rounded-2xl border ${rarity.borderClass} ${rarity.bgClass} p-2.5 flex items-center justify-between gap-2.5`}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-slate-950/80 border border-slate-700/80 p-1 shrink-0 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-slate-950/90 border border-amber-500/35 overflow-hidden shrink-0 flex items-center justify-center">
                     <AssetImg
-                      src={MOD_STAT_ASSETS[tpl.stat]}
-                      alt={tpl.stat}
-                      className="w-full h-full object-contain"
-                      fallback={<SlotIcon slot={tpl.slotType} className="w-5 h-5 text-amber-300" />}
+                      src={tpl.imageUrl}
+                      alt={tpl.name}
+                      className="w-full h-full object-cover"
+                      fallback={
+                        <AssetImg
+                          src={MOD_STAT_ASSETS[tpl.stat]}
+                          alt={tpl.stat}
+                          className="w-9 h-9 object-contain"
+                          fallback={<SlotIcon slot={tpl.slotType} className="w-5 h-5 text-amber-300" />}
+                        />
+                      }
                     />
                   </div>
                   <div className="min-w-0 flex-1">
