@@ -6,6 +6,10 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   publicDir: path.resolve(__dirname, '../../Assets'),
+  build: {
+    outDir: path.resolve(__dirname, '../../dist'),
+    emptyOutDir: true,
+  },
   resolve: {
     alias: {
       '@super-monster/game-engine': path.resolve(
