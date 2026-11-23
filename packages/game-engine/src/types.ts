@@ -9,6 +9,7 @@ export type SkillTrigger =
   | 'on_enter'
   | 'on_death'
   | 'on_attack'
+  | 'on_damaged'
   | 'on_active';
 
 export type SkillScope =
@@ -17,6 +18,7 @@ export type SkillScope =
   | 'ally_right'
   | 'ally_adjacent'
   | 'all_allies'
+  | 'chosen_ally'
   | 'chosen_enemy'
   | 'opposite_enemy'
   | 'enemy_adjacent_to_target'
@@ -28,7 +30,13 @@ export type SkillEffectType =
   | 'heal'
   | 'damage'
   | 'debuff_atk'
-  | 'shield';
+  | 'shield'
+  | 'self_recoil'
+  | 'aoe_attack'
+  | 'double_attack'
+  | 'rush_reinforce'
+  | 'revive_to_hand'
+  | 'self_destruct_damage';
 
 export interface SkillDefinition {
   id: string;
@@ -40,6 +48,7 @@ export interface SkillDefinition {
   scope: SkillScope;
   filterType?: string;
   filterFaction?: string;
+  filterPrecedence?: Precedence;
   effect: SkillEffectType;
   value: number;
 }
@@ -106,7 +115,9 @@ export interface BoardMonster {
   bonusAtk: number;
   bonusVel: number;
   status: MonsterActionStatus;
+  actionsLeft: number;
   activeCooldown: number;
+  reviveUsed?: boolean;
 }
 
 export interface PlayerState {
@@ -119,6 +130,7 @@ export interface PlayerState {
   draftOptions: CardDefinition[];
   extrasPlayed: number;
   maxExtras: number;
+  extrasDrawn: number;
   passedThisRound: boolean;
 }
 
@@ -136,8 +148,11 @@ export interface VisualEvent {
   type: 'attack' | 'skill' | 'heal' | 'reinforce';
   sourceSide?: Side;
   sourceSlot?: 0 | 1 | 2;
+  sourceName?: string;
   targetSide?: Side;
   targetSlot?: 0 | 1 | 2 | 'all';
+  targetName?: string;
+  skillName?: string;
   amount?: number;
   precedenceResult?: 'advantage' | 'disadvantage' | 'neutral';
   label?: string;
@@ -150,7 +165,7 @@ export interface MatchState {
   players: Record<Side, PlayerState>;
   activeSide: Side;
   initiativeSide: Side;
-  winner: Side | null;
+  winner: Side | 'draw' | null;
   log: CombatLogEntry[];
   lastEvent: VisualEvent | null;
 }
@@ -159,4 +174,40 @@ export interface GameCatalog {
   cards: CardDefinition[];
   terrains: TerrainDefinition[];
   slotModifiers: SlotModifierDefinition[];
+}
+
+export interface CampaignStageDefinition {
+  id: string;
+  stageNumber: 1 | 2 | 3 | 4 | 5;
+  name: string;
+  enemyName: string;
+  story: string;
+  isBoss?: boolean;
+  /** Position on the campaign map background (0..100%) */
+  mapX: number;
+  mapY: number;
+  /** Exactly 5 pre-defined enemy cards (3 initial + 2 reinforcements) */
+  enemyCardIds: [string, string, string, string, string];
+  /** 3 themed slot modifiers for this stage */
+  slotModifierIds: [string, string, string];
+  /** Progressive difficulty stat multiplier for enemy cards */
+  enemyStatMultiplier: number;
+}
+
+export interface CampaignDefinition {
+  id: string;
+  number: 1 | 2 | 3 | 4 | 5;
+  name: string;
+  subtitle: string;
+  story: string;
+  terrainId: string;
+  backgroundUrl: string;
+  accentColor: string;
+  stages: [
+    CampaignStageDefinition,
+    CampaignStageDefinition,
+    CampaignStageDefinition,
+    CampaignStageDefinition,
+    CampaignStageDefinition,
+  ];
 }

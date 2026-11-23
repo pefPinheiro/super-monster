@@ -1,5 +1,7 @@
-import { Pause, Play, RotateCcw, ScrollText, Skull } from 'lucide-react';
+import { Play, ScrollText, Skull } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { UI_ASSETS } from '../assets/assetPaths';
+import { sfx } from '../utils/sfx';
 import { AssetImg } from './AssetImg';
 
 interface TopHudProps {
@@ -10,12 +12,13 @@ interface TopHudProps {
   enemyOnBoard: number;
   playerVel: number;
   enemyVel: number;
+  playerReadyCount: number;
+  enemyReadyCount: number;
   activeSide: 'player' | 'enemy';
+  initiativeSide: 'player' | 'enemy';
   isAuto: boolean;
   onToggleAuto: () => void;
   onOpenLog: () => void;
-  onRestart: () => void;
-  onPause: () => void;
 }
 
 export function TopHud({
@@ -26,118 +29,198 @@ export function TopHud({
   enemyOnBoard,
   playerVel,
   enemyVel,
+  playerReadyCount,
+  enemyReadyCount,
   activeSide,
+  initiativeSide,
   isAuto,
   onToggleAuto,
   onOpenLog,
-  onRestart,
-  onPause,
 }: TopHudProps) {
-  const pct = Math.max(0, Math.min(100, (enemyRemaining / enemyMaxTotal) * 100));
+  const [velChanged, setVelChanged] = useState(false);
+
+  useEffect(() => {
+    setVelChanged(true);
+    const t = setTimeout(() => setVelChanged(false), 700);
+    return () => clearTimeout(t);
+  }, [playerVel, enemyVel]);
 
   return (
-    <header className="relative z-30 hud-stone-bar border-b-2 px-2 py-2">
-      <div className="flex items-center justify-between gap-1.5">
-        {/* Left System Controls: AUTO + Log */}
-        <div className="flex flex-col gap-1">
-          <button
-            type="button"
-            onClick={onToggleAuto}
+    <header className="relative z-30 flex flex-col">
+      {/* Compact, Sleek Top Bar: Enemy Info (Top-Left) + AUTO & LOG Side-by-Side (Top-Right) */}
+      <div className="hud-stone-bar border-b-2 border-amber-600/45 px-3 py-1.5 flex items-center justify-between gap-2 shadow-[0_6px_18px_rgba(0,0,0,0.85)]">
+        {/* Top-Left: Enemy Portrait + Name + Round/Cards */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div
             className={[
-              'flex items-center justify-center gap-1 rounded-md border px-2 py-1 text-[10px] font-extrabold tracking-wide transition cursor-pointer',
-              isAuto
-                ? 'bg-emerald-600 border-emerald-300 text-white shadow-[0_0_10px_rgba(16,185,129,0.7)]'
-                : 'bg-slate-800/90 border-slate-600 text-slate-200 hover:bg-slate-700',
+              'relative w-12 h-12 shrink-0 flex items-center justify-center transition-all duration-300',
+              activeSide === 'enemy'
+                ? 'scale-108 drop-shadow-[0_0_14px_rgba(239,68,68,0.95)]'
+                : 'drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]',
             ].join(' ')}
           >
-            <Play className="w-3 h-3 fill-current" />
-            AUTO
-          </button>
-          <button
-            type="button"
-            onClick={onOpenLog}
-            title="Registro de Combate"
-            className="flex items-center justify-center gap-1 rounded-md bg-slate-800/90 border border-slate-600 px-2 py-1 text-[10px] font-bold text-slate-200 hover:bg-slate-700 cursor-pointer"
-          >
-            <ScrollText className="w-3 h-3" />
-            LOG
-          </button>
-        </div>
-
-        {/* Center: Enemy Portrait + Runic Axe Bar (Cartas Restantes) + Round */}
-        <div className="flex-1 flex flex-col items-center gap-1 px-2 py-0.5">
-          <div className="w-full flex items-center gap-2">
-            <div className="w-11 h-11 shrink-0 rounded-full overflow-hidden bg-gradient-to-b from-slate-700 to-slate-950 border-2 border-red-500/90 ring-1 ring-black flex items-center justify-center shadow-lg">
+            <div className="absolute inset-[19%] rounded-full overflow-hidden bg-slate-950">
               <AssetImg
                 src={UI_ASSETS.heroEnemy}
                 alt={enemyName}
                 className="w-full h-full object-cover"
-                fallback={<Skull className="w-5 h-5 text-red-400" />}
+                fallback={<Skull className="w-5 h-5 text-red-400 m-auto" />}
               />
             </div>
+            <AssetImg
+              src={UI_ASSETS.hudPortraitFrameEnemy}
+              alt="Moldura do Inimigo"
+              className="pointer-events-none relative z-10 w-full h-full object-contain"
+              fallback={null}
+            />
+          </div>
 
-            {/* Runic Axe Bar showing Enemy Monsters Remaining (No Player HP!) */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between text-[10px] font-bold mb-0.5">
-                <span className="text-slate-100 truncate font-display text-outline-sm">
-                  {enemyName}
-                </span>
-                <span className="text-amber-300 font-black text-outline-sm">
-                  {enemyRemaining}/{enemyMaxTotal} Cartas
-                </span>
-              </div>
-              <div className="relative h-4 w-full rounded-r-full rounded-l-sm bg-slate-950 border-2 border-slate-500 overflow-hidden shadow-inner">
-                <div
-                  className="h-full bg-gradient-to-r from-red-700 via-red-500 to-amber-500 transition-all duration-300"
-                  style={{ width: `${pct}%` }}
-                />
-                <span className="absolute inset-0 flex items-center justify-center text-[8.5px] font-black tracking-wider text-white text-outline-sm">
-                  {enemyOnBoard} EM CAMPO • {Math.max(0, enemyRemaining - enemyOnBoard)} REFORÇOS
-                </span>
-              </div>
+          <div className="min-w-0 flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="font-display text-xs sm:text-[13px] text-amber-100 truncate text-outline-sm tracking-wide">
+                {enemyName}
+              </span>
+              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-400/70 font-runic text-[8.5px] text-amber-200 shrink-0 text-outline-sm">
+                R{round}/30
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span
+                className={[
+                  'px-2 py-0.2 rounded-full font-runic text-[8.5px] uppercase tracking-wider text-outline-sm shrink-0 transition-all',
+                  activeSide === 'player'
+                    ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/90 shadow-[0_0_8px_rgba(16,185,129,0.55)]'
+                    : 'bg-red-500/35 text-red-200 border border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.75)] animate-pulse',
+                ].join(' ')}
+              >
+                {activeSide === 'player'
+                  ? `★ SUA VEZ (${playerReadyCount} pronto${playerReadyCount === 1 ? '' : 's'})`
+                  : `⚔ INIMIGO (${enemyReadyCount} pronto${enemyReadyCount === 1 ? '' : 's'})`}
+              </span>
+              <span className="text-[9px] font-bold text-slate-200 text-outline-sm whitespace-nowrap">
+                {enemyRemaining}/{enemyMaxTotal}
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Round & Initiative Strip */}
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="font-display font-extrabold tracking-widest text-amber-300 bg-slate-950/90 border border-amber-500/50 rounded-full px-2.5 py-0.5 text-outline-sm">
-              ROUND {round}
-            </span>
-            <span className="text-sky-300 font-extrabold text-outline-sm">
-              VEL {playerVel} vs {enemyVel}
-            </span>
+        {/* Top-Right: AUTO & LOG Side by Side */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              sfx.click();
+              onToggleAuto();
+            }}
+            title="Modo Automático (AUTO)"
+            className={[
+              'relative w-10 h-10 flex items-center justify-center rounded-lg transition cursor-pointer',
+              isAuto
+                ? 'ring-2 ring-emerald-400 brightness-125 shadow-[0_0_14px_rgba(16,185,129,0.9)]'
+                : 'hover:brightness-115 active:scale-90',
+            ].join(' ')}
+          >
+            <AssetImg
+              src={UI_ASSETS.hudBtnAuto}
+              alt="AUTO"
+              className="w-10 h-10 object-contain drop-shadow"
+              fallback={
+                <span className="flex items-center justify-center w-8 h-8 rounded bg-slate-800 border border-slate-600 text-amber-300">
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                </span>
+              }
+            />
             <span
               className={[
-                'px-1.5 py-0.5 rounded font-extrabold text-[9px] uppercase text-outline-sm',
-                activeSide === 'player'
-                  ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50'
-                  : 'bg-red-500/25 text-red-300 border border-red-400/50',
+                'absolute -bottom-0.5 inset-x-0 text-center text-[7px] font-runic tracking-wider text-outline-sm',
+                isAuto ? 'text-emerald-300' : 'text-amber-200',
               ].join(' ')}
             >
-              {activeSide === 'player' ? 'Sua Vez' : 'Inimigo'}
+              AUTO
             </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              sfx.click();
+              onOpenLog();
+            }}
+            title="Registro de Combate & Regras"
+            className="relative w-10 h-10 flex items-center justify-center hover:brightness-115 active:scale-90 transition cursor-pointer"
+          >
+            <AssetImg
+              src={UI_ASSETS.hudBtnLog}
+              alt="Registro"
+              className="w-10 h-10 object-contain drop-shadow"
+              fallback={
+                <span className="flex items-center justify-center w-8 h-8 rounded bg-slate-800 border border-slate-600 text-slate-200">
+                  <ScrollText className="w-3.5 h-3.5" />
+                </span>
+              }
+            />
+            <span className="absolute -bottom-0.5 inset-x-0 text-center text-[7px] font-runic tracking-wider text-slate-200 text-outline-sm">
+              LOG
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Centered Larger Winged Speed Banner (hud_vel_banner.png) directly above enemy cards */}
+      <div className="relative z-20 -mb-2 pt-1 flex items-center justify-center pointer-events-none select-none">
+        <div
+          className={[
+            'relative w-[178px] h-[66px] flex items-center justify-center transition-transform',
+            velChanged ? 'animate-vel-pulse' : '',
+          ].join(' ')}
+        >
+          <AssetImg
+            src={UI_ASSETS.hudVelBanner}
+            alt="Velocidade"
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-auto drop-shadow-[0_6px_16px_rgba(56,189,248,0.55)]"
+            fallback={
+              <div className="absolute inset-0 rounded-xl runic-dialog-panel border border-sky-400" />
+            }
+          />
+
+          {/* Twin Speed Values inside the Left (Player) and Right (Enemy) panels */}
+          <div className="relative z-10 w-[63%] grid grid-cols-2 items-center text-center pt-0.5">
+            <div className="flex flex-col items-center leading-none">
+              <span className="text-[7px] font-runic text-emerald-300 text-outline-sm">
+                {initiativeSide === 'player' ? '1º VOCÊ' : 'VOCÊ'}
+              </span>
+              <span
+                className={[
+                  'font-display text-base text-outline mt-0.5',
+                  playerVel >= enemyVel ? 'text-emerald-300' : 'text-slate-100',
+                ].join(' ')}
+              >
+                {playerVel}
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center leading-none">
+              <span className="text-[7px] font-runic text-rose-300 text-outline-sm">
+                {initiativeSide === 'enemy' ? '1º INIM.' : 'INIM.'}
+              </span>
+              <span
+                className={[
+                  'font-display text-base text-outline mt-0.5',
+                  enemyVel > playerVel ? 'text-rose-400' : 'text-slate-200',
+                ].join(' ')}
+              >
+                {enemyVel}
+              </span>
+            </div>
           </div>
         </div>
-
-        {/* Right System Controls: Restart + Pause */}
-        <div className="flex flex-col gap-1">
-          <button
-            type="button"
-            onClick={onRestart}
-            title="Reiniciar Partida"
-            className="flex items-center justify-center rounded-md bg-slate-800/90 border border-slate-600 p-1.5 text-slate-200 hover:bg-slate-700 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onPause}
-            title="Pausar / Regras"
-            className="flex items-center justify-center rounded-md bg-slate-800/90 border border-slate-600 p-1.5 text-slate-200 hover:bg-slate-700 cursor-pointer"
-          >
-            <Pause className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <span className="-mt-2.5 px-2 py-0.2 rounded-full bg-slate-950/90 border border-sky-400/60 font-runic text-[7.5px] tracking-wider text-sky-200 text-outline-sm shadow">
+          {playerVel === enemyVel
+            ? `VEL EMPATADA • ${initiativeSide === 'player' ? 'VOCÊ COMEÇA' : 'INIMIGO COMEÇA'}`
+            : initiativeSide === 'player'
+              ? 'VEL MAIOR: VOCÊ COMEÇA'
+              : 'VEL MAIOR: INIMIGO COMEÇA'}
+        </span>
       </div>
     </header>
   );

@@ -87,6 +87,18 @@ test('End of round draws +1 card (max 4) and reinforcement waits until next roun
   state = playReinforcement(state, 'player', 0, 0);
   assert.equal(state.players.player.extrasPlayed, 1);
   assert.equal(state.players.player.slots[0]?.status, 'waiting');
+
+  // Pass round 2 -> draws 2nd reinforcement
+  state = passTurn(state, state.activeSide);
+  state = passTurn(state, state.activeSide);
+  assert.equal(state.players.player.extrasDrawn, 2);
+  const handBeforeR4 = state.players.player.hand.length;
+
+  // Pass round 3 -> no longer draws a 3rd reinforcement (capped at 2)
+  state = passTurn(state, state.activeSide);
+  state = passTurn(state, state.activeSide);
+  assert.equal(state.players.player.extrasDrawn, 2);
+  assert.equal(state.players.player.hand.length, handBeforeR4);
 });
 
 test('Game ends immediately when all enemy cards are destroyed (no player HP)', () => {
