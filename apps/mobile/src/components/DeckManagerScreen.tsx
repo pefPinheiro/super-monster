@@ -327,7 +327,13 @@ export function DeckManagerScreen({
       />
 
       {/* TOP BAR (leaves center top clear for global FullscreenButton) */}
-      <header className="relative z-20 shrink-0 px-3 pt-2.5 pb-2 border-b border-amber-500/20 bg-slate-950/85 backdrop-blur-md">
+      <header className="relative z-20 shrink-0 px-3 pt-2.5 pb-2 border-b border-amber-500/20 bg-slate-950/85 backdrop-blur-md overflow-hidden">
+        <AssetImg
+          src={UI_ASSETS.deckHeaderBanner}
+          alt=""
+          className="pointer-events-none absolute inset-x-0 top-0 w-full h-14 object-cover opacity-30"
+          fallback={null}
+        />
         <div className="flex items-center justify-between gap-2">
           <button
             type="button"
@@ -633,7 +639,7 @@ export function DeckManagerScreen({
                         <AssetImg
                           src={UI_ASSETS.deckSlotEmpty}
                           alt=""
-                          className="absolute inset-0 w-full h-full object-cover opacity-35"
+                          className="absolute inset-0 w-full h-full object-cover opacity-70"
                           fallback={null}
                         />
                         <span className="relative text-[10px] font-runic text-slate-500">
