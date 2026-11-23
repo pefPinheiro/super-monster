@@ -5,12 +5,20 @@ create table if not exists public.player_profiles (
   player_id text primary key,
   player_name text not null default 'Herói Rúnico',
   deck_ids jsonb not null default '[]'::jsonb,
+  saved_decks jsonb not null default '[]'::jsonb,
+  active_deck_id text,
   completed_stages jsonb not null default '[]'::jsonb,
   wins integer not null default 0,
   losses integer not null default 0,
   draws integer not null default 0,
   updated_at timestamptz not null default now()
 );
+
+-- Caso a tabela já exista de uma versão anterior, adiciona as colunas de múltiplos decks
+alter table public.player_profiles
+  add column if not exists saved_decks jsonb not null default '[]'::jsonb;
+alter table public.player_profiles
+  add column if not exists active_deck_id text;
 
 create table if not exists public.match_history (
   id bigint generated always as identity primary key,

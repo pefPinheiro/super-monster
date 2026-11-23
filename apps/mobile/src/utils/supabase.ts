@@ -38,9 +38,13 @@ function getHeaders(): HeadersInit {
   };
 }
 
+import type { SavedDeck } from './decks';
+
 export interface RemotePlayerProfile {
   player_id: string;
   deck_ids: string[];
+  saved_decks?: SavedDeck[];
+  active_deck_id?: string | null;
   completed_stages: string[];
   wins: number;
   losses: number;
@@ -65,21 +69,45 @@ export async function loadProfileFromSupabase(): Promise<RemotePlayerProfile | n
 
 export async function saveProfileToSupabase(data: {
   deckIds: string[];
+  savedDecks?: SavedDeck[];
+  activeDeckId?: string;
   completedStages: string[];
 }): Promise<void> {
   if (!isSupabaseConfigured()) return;
   const playerId = getOrCreatePlayerId();
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/player_profiles`, {
+    const payload: Record<string, unknown> = {
+      player_id: playerId,
+      deck_ids: data.deckIds,
+      completed_stages: data.completedStages,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.savedDecks) {
+      payload.saved_decks = data.savedDecks;
+    }
+    if (data.activeDeckId) {
+      payload.active_deck_id = data.activeDeckId;
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/player_profiles`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        player_id: playerId,
-        deck_ids: data.deckIds,
-        completed_stages: data.completedStages,
-        updated_at: new Date().toISOString(),
-      }),
+      body: JSON.stringify(payload),
     });
+
+    // If remote schema hasn't been migrated with saved_decks yet, retry with base fields
+    if (!res.ok && (data.savedDecks || data.activeDeckId)) {
+      await fetch(`${SUPABASE_URL}/rest/v1/player_profiles`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          player_id: playerId,
+          deck_ids: data.deckIds,
+          completed_stages: data.completedStages,
+          updated_at: new Date().toISOString(),
+        }),
+      });
+    }
   } catch {
     // Silent fallback when offline
   }

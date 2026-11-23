@@ -1,5 +1,4 @@
 import {
-  DEFAULT_CARDS,
   DEFAULT_CATALOG,
   chooseAiDraft,
   confirmDraft,
@@ -11,9 +10,18 @@ import {
 import { useEffect, useState } from 'react';
 import { BattleArena } from './components/BattleArena';
 import { CampaignScreen } from './components/CampaignScreen';
+import { DeckManagerScreen } from './components/DeckManagerScreen';
 import { DraftScreen } from './components/DraftScreen';
 import { FullscreenButton } from './components/FullscreenButton';
 import { TitleScreen } from './components/TitleScreen';
+import {
+  DECK_SIZE,
+  getBattleDeckIds,
+  loadDeckLibrary,
+  saveDeckLibrary,
+  sanitizeCardIds,
+  type DeckLibraryState,
+} from './utils/decks';
 import { setMusicTrack, type MusicTrack } from './utils/music';
 import {
   loadProfileFromSupabase,
@@ -21,24 +29,7 @@ import {
   saveProfileToSupabase,
 } from './utils/supabase';
 
-const DECK_STORAGE_KEY = 'sm_player_deck_ids';
 const CAMPAIGN_STORAGE_KEY = 'sm_campaign_progress';
-const DEFAULT_9_IDS = DEFAULT_CARDS.slice(0, 9).map((c) => c.id);
-
-function loadSavedDeck(): string[] {
-  if (typeof window === 'undefined') return DEFAULT_9_IDS;
-  try {
-    const raw = window.localStorage.getItem(DECK_STORAGE_KEY);
-    if (!raw) return DEFAULT_9_IDS;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length === 9) {
-      return parsed;
-    }
-  } catch {
-    // ignore invalid storage
-  }
-  return DEFAULT_9_IDS;
-}
 
 function loadCampaignProgress(): string[] {
   if (typeof window === 'undefined') return [];
@@ -54,11 +45,13 @@ function loadCampaignProgress(): string[] {
 }
 
 export function App() {
-  const [view, setView] = useState<'title' | 'campaign'>('title');
+  const [view, setView] = useState<'title' | 'campaign' | 'deck'>('title');
   const [selectedTerrainId, setSelectedTerrainId] = useState<string | 'random'>(
     'random'
   );
-  const [playerDeckIds, setPlayerDeckIds] = useState<string[]>(loadSavedDeck);
+  const [deckLibrary, setDeckLibrary] =
+    useState<DeckLibraryState>(loadDeckLibrary);
+  const playerDeckIds = getBattleDeckIds(deckLibrary);
   const [completedStageIds, setCompletedStageIds] = useState<string[]>(
     loadCampaignProgress
   );
@@ -68,13 +61,49 @@ export function App() {
   } | null>(null);
   const [match, setMatch] = useState<MatchState | null>(null);
 
-  // Load saved profile (deck + campaign progress) from Supabase if configured
+  // Load saved profile (decks + campaign progress) from Supabase if configured
   useEffect(() => {
     let active = true;
     loadProfileFromSupabase().then((remote) => {
       if (!active || !remote) return;
-      if (Array.isArray(remote.deck_ids) && remote.deck_ids.length === 9) {
-        setPlayerDeckIds(remote.deck_ids);
+      if (Array.isArray(remote.saved_decks) && remote.saved_decks.length > 0) {
+        const sanitizedDecks = remote.saved_decks.map((d, idx) => ({
+          id: typeof d.id === 'string' && d.id ? d.id : `deck-${idx + 1}`,
+          name:
+            typeof d.name === 'string' && d.name.trim()
+              ? d.name.trim()
+              : `Deck ${idx + 1}`,
+          cardIds: sanitizeCardIds(d.cardIds),
+          updatedAt:
+            typeof d.updatedAt === 'string'
+              ? d.updatedAt
+              : new Date().toISOString(),
+        }));
+        const nextLib: DeckLibraryState = {
+          decks: sanitizedDecks,
+          activeDeckId:
+            remote.active_deck_id &&
+            sanitizedDecks.some((d) => d.id === remote.active_deck_id)
+              ? remote.active_deck_id
+              : sanitizedDecks[0].id,
+        };
+        setDeckLibrary(nextLib);
+        saveDeckLibrary(nextLib);
+      } else if (
+        Array.isArray(remote.deck_ids) &&
+        remote.deck_ids.length === DECK_SIZE
+      ) {
+        const validIds = sanitizeCardIds(remote.deck_ids);
+        if (validIds.length === DECK_SIZE) {
+          setDeckLibrary((prev) => {
+            const nextDecks = prev.decks.map((d, idx) =>
+              idx === 0 ? { ...d, cardIds: validIds } : d
+            );
+            const nextLib = { ...prev, decks: nextDecks };
+            saveDeckLibrary(nextLib);
+            return nextLib;
+          });
+        }
       }
       if (Array.isArray(remote.completed_stages)) {
         setCompletedStageIds((prev) =>
@@ -87,17 +116,16 @@ export function App() {
     };
   }, []);
 
-  const handleUpdateDeck = (nextIds: string[]) => {
-    setPlayerDeckIds(nextIds);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(nextIds));
-    }
-    if (nextIds.length === 9) {
-      void saveProfileToSupabase({
-        deckIds: nextIds,
-        completedStages: completedStageIds,
-      });
-    }
+  const handleUpdateDeckLibrary = (nextLib: DeckLibraryState) => {
+    setDeckLibrary(nextLib);
+    saveDeckLibrary(nextLib);
+    const battleIds = getBattleDeckIds(nextLib);
+    void saveProfileToSupabase({
+      deckIds: battleIds,
+      savedDecks: nextLib.decks,
+      activeDeckId: nextLib.activeDeckId,
+      completedStages: completedStageIds,
+    });
   };
 
   // Unlock next campaign stage & record match result in Supabase when a match finishes
@@ -125,6 +153,8 @@ export function App() {
         }
         void saveProfileToSupabase({
           deckIds: playerDeckIds,
+          savedDecks: deckLibrary.decks,
+          activeDeckId: deckLibrary.activeDeckId,
           completedStages: next,
         });
         return next;
@@ -149,7 +179,7 @@ export function App() {
     setActiveCampaignCtx(null);
     const newMatch = createMatch(DEFAULT_CATALOG, {
       terrainId: selectedTerrainId === 'random' ? undefined : selectedTerrainId,
-      playerDeckIds: playerDeckIds.length === 9 ? playerDeckIds : DEFAULT_9_IDS,
+      playerDeckIds,
     });
     setMatch(newMatch);
   };
@@ -162,7 +192,7 @@ export function App() {
     const newMatch = createMatch(DEFAULT_CATALOG, {
       terrainId: campaign.terrainId,
       enemyName: stage.enemyName,
-      playerDeckIds: playerDeckIds.length === 9 ? playerDeckIds : DEFAULT_9_IDS,
+      playerDeckIds,
       enemyDeckIds: [...stage.enemyCardIds],
       slotModifierIds: stage.slotModifierIds,
       enemyStatMultiplier: stage.enemyStatMultiplier,
@@ -205,15 +235,20 @@ export function App() {
               onStartStage={startCampaignStage}
               onBack={() => setView('title')}
             />
+          ) : view === 'deck' ? (
+            <DeckManagerScreen
+              library={deckLibrary}
+              onChangeLibrary={handleUpdateDeckLibrary}
+              onBack={() => setView('title')}
+            />
           ) : (
             <TitleScreen
               terrains={DEFAULT_CATALOG.terrains}
               selectedTerrainId={selectedTerrainId}
-              playerDeckIds={playerDeckIds}
-              onUpdateDeck={handleUpdateDeck}
               onSelectTerrain={setSelectedTerrainId}
               onStartMatch={startSkirmishMatch}
               onOpenCampaign={() => setView('campaign')}
+              onOpenDeck={() => setView('deck')}
             />
           )
         ) : match.phase === 'draft' ? (

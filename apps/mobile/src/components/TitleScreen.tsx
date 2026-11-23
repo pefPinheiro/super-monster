@@ -1,40 +1,28 @@
+import type { TerrainDefinition } from '@super-monster/game-engine';
 import {
-  DEFAULT_CARDS,
-  PRECEDENCE_META,
-  type CardDefinition,
-  type Precedence,
-  type TerrainDefinition,
-} from '@super-monster/game-engine';
-import {
-  Check,
   ChevronLeft,
   ChevronRight,
-  Info,
   Music,
-  Plus,
   Shuffle,
   Swords,
   Volume2,
   VolumeX,
-  X,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { CRYSTAL_ASSETS, UI_ASSETS } from '../assets/assetPaths';
+import { UI_ASSETS } from '../assets/assetPaths';
 import { isMusicEnabled, setMusicEnabled } from '../utils/music';
 import { isSfxEnabled, setSfxEnabled, sfx } from '../utils/sfx';
 import { AssetImg } from './AssetImg';
-import { CardInspectModal } from './CardInspectModal';
 import { RunicButton } from './RunicButton';
 import { RunicDialog } from './RunicDialog';
 
 interface TitleScreenProps {
   terrains: TerrainDefinition[];
   selectedTerrainId: string | 'random';
-  playerDeckIds: string[];
-  onUpdateDeck: (ids: string[]) => void;
   onSelectTerrain: (id: string | 'random') => void;
   onStartMatch: () => void;
   onOpenCampaign: () => void;
+  onOpenDeck: () => void;
 }
 
 type MenuId = 'battle' | 'campaign' | 'deck' | 'market' | 'settings';
@@ -113,40 +101,15 @@ const AMBIENT_SPARKS = [
 export function TitleScreen({
   terrains,
   selectedTerrainId,
-  playerDeckIds,
-  onUpdateDeck,
   onSelectTerrain,
   onStartMatch,
   onOpenCampaign,
+  onOpenDeck,
 }: TitleScreenProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [modal, setModal] = useState<'deck' | 'market' | 'settings' | null>(
-    null
-  );
-  const [inspectedDeckCard, setInspectedDeckCard] =
-    useState<CardDefinition | null>(null);
-  const [deckFilter, setDeckFilter] = useState<Precedence | 'all'>('all');
+  const [modal, setModal] = useState<'market' | 'settings' | null>(null);
   const [soundOn, setSoundOn] = useState(isSfxEnabled());
   const [musicOn, setMusicOn] = useState(isMusicEnabled());
-
-  const handleToggleCardInDeck = (cardId: string) => {
-    if (playerDeckIds.includes(cardId)) {
-      sfx.cardRemove();
-      onUpdateDeck(playerDeckIds.filter((id) => id !== cardId));
-      return;
-    }
-    if (playerDeckIds.length >= 9) {
-      sfx.click();
-      return;
-    }
-    sfx.cardPlace();
-    onUpdateDeck([...playerDeckIds, cardId]);
-  };
-
-  const filteredCards =
-    deckFilter === 'all'
-      ? DEFAULT_CARDS
-      : DEFAULT_CARDS.filter((c) => c.precedence === deckFilter);
 
   const dragStartX = useRef<number | null>(null);
   const dragDeltaX = useRef<number>(0);
@@ -178,6 +141,10 @@ export function TitleScreen({
     }
     if (item.id === 'campaign') {
       onOpenCampaign();
+      return;
+    }
+    if (item.id === 'deck') {
+      onOpenDeck();
       return;
     }
     setModal(item.id);
@@ -452,226 +419,6 @@ export function TitleScreen({
           })}
         </div>
       </footer>
-
-      {/* MODAL: DECK (Lista das 50 Cartas + 9 Locais de Montagem do Deck) */}
-      {modal === 'deck' && (
-        <RunicDialog
-          title={`Montar Deck (${playerDeckIds.length}/9)`}
-          variant="main"
-          maxWidthClass="max-w-[420px] max-h-[92%]"
-          onClose={() => {
-            if (playerDeckIds.length === 9) setModal(null);
-          }}
-          hideCloseButton={playerDeckIds.length !== 9}
-        >
-          <div className="flex-1 flex flex-col overflow-hidden gap-1.5">
-            {/* Precedence Filter Tabs */}
-            <div className="grid grid-cols-4 gap-1 shrink-0">
-              {(
-                [
-                  { id: 'all', label: `Todas (${DEFAULT_CARDS.length})` },
-                  { id: 'furia', label: 'Fúria' },
-                  { id: 'astucia', label: 'Astúcia' },
-                  { id: 'arcano', label: 'Arcano' },
-                ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    sfx.click();
-                    setDeckFilter(tab.id);
-                  }}
-                  className={[
-                    'py-1 rounded-lg border font-runic text-[8.5px] transition cursor-pointer',
-                    deckFilter === tab.id
-                      ? 'bg-amber-500/25 border-amber-400 text-amber-200'
-                      : 'bg-black/45 border-slate-700 text-slate-300 hover:border-slate-500',
-                  ].join(' ')}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* 50 Cards Collection List (Click card = Full 3D Holo View; +/Check = Add/Remove from Deck) */}
-            <div className="flex-1 overflow-y-auto grid grid-cols-3 gap-1.5 pr-0.5 max-h-[215px]">
-              {filteredCards.map((card) => {
-                const inDeck = playerDeckIds.includes(card.id);
-                return (
-                  <div
-                    key={card.id}
-                    className={[
-                      'relative rounded-lg border bg-slate-950/90 p-1 flex flex-col justify-between overflow-hidden transition',
-                      inDeck
-                        ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.45)]'
-                        : 'border-slate-700/85 hover:border-slate-400',
-                    ].join(' ')}
-                  >
-                    {/* Click card art to inspect FULL 3D Holo Card */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        sfx.click();
-                        setInspectedDeckCard(card);
-                      }}
-                      className="relative aspect-[3/3.4] w-full rounded overflow-hidden mb-1 cursor-pointer group"
-                    >
-                      <AssetImg
-                        src={card.artUrl}
-                        alt={card.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition"
-                        fallback={
-                          <div className="w-full h-full flex items-center justify-center text-xl">
-                            {card.emojiFallback}
-                          </div>
-                        }
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-black/30" />
-                      <AssetImg
-                        src={CRYSTAL_ASSETS[card.precedence]}
-                        alt=""
-                        className="absolute top-0.5 left-0.5 w-3.5 h-3.5 object-contain"
-                        fallback={null}
-                      />
-                      <span className="absolute bottom-4 right-0.5 w-3.5 h-3.5 rounded-full bg-black/70 border border-slate-400/70 flex items-center justify-center text-slate-200">
-                        <Info className="w-2 h-2" />
-                      </span>
-                      <div className="absolute bottom-0.5 inset-x-0.5 text-[7.5px] font-black text-white truncate text-outline-sm text-left">
-                        {card.name}
-                      </div>
-                    </button>
-
-                    {/* Bottom Row: Stats + Toggle Deck Button */}
-                    <div className="flex items-center justify-between gap-1">
-                      <div className="flex items-center gap-0.5 text-[7px] font-black">
-                        <span className="text-red-400">{card.atk}</span>
-                        <span className="text-slate-600">/</span>
-                        <span className="text-emerald-400">{card.hp}</span>
-                        <span className="text-slate-600">/</span>
-                        <span className="text-sky-300">{card.vel}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleCardInDeck(card.id)}
-                        title={
-                          inDeck ? 'Remover do Deck' : 'Adicionar ao Deck'
-                        }
-                        className={[
-                          'w-5 h-5 rounded flex items-center justify-center border transition cursor-pointer shrink-0',
-                          inDeck
-                            ? 'bg-amber-400 border-amber-100 text-slate-950'
-                            : playerDeckIds.length >= 9
-                              ? 'bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed'
-                              : 'bg-emerald-600/85 border-emerald-300 text-white hover:brightness-110',
-                        ].join(' ')}
-                      >
-                        {inDeck ? (
-                          <Check className="w-3 h-3 stroke-[3]" />
-                        ) : (
-                          <Plus className="w-3 h-3 stroke-[3]" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Bottom 9 Deck Slots */}
-            <div className="shrink-0 bg-black/55 border border-amber-500/45 rounded-xl p-1.5">
-              <div className="flex items-center justify-between text-[8.5px] font-runic text-amber-200 mb-1 px-0.5">
-                <span>SEU DECK DE BATALHA ({playerDeckIds.length}/9)</span>
-                {playerDeckIds.length < 9 && (
-                  <span className="text-rose-300">
-                    Falta(m) {9 - playerDeckIds.length}
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-5 gap-1">
-                {Array.from({ length: 9 }).map((_, idx) => {
-                  const id = playerDeckIds[idx];
-                  const card = id
-                    ? DEFAULT_CARDS.find((c) => c.id === id)
-                    : null;
-                  return (
-                    <div
-                      key={idx}
-                      className={[
-                        'relative aspect-[3/3.4] rounded border overflow-hidden flex items-center justify-center',
-                        card
-                          ? 'border-amber-400/85 bg-slate-900'
-                          : 'border-dashed border-slate-600 bg-slate-950/70',
-                      ].join(' ')}
-                    >
-                      {card ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              sfx.click();
-                              setInspectedDeckCard(card);
-                            }}
-                            className="w-full h-full cursor-pointer"
-                          >
-                            <AssetImg
-                              src={card.artUrl}
-                              alt={card.name}
-                              className="w-full h-full object-cover"
-                              fallback={null}
-                            />
-                            <div className="absolute inset-x-0 bottom-0 bg-black/85 text-[6.5px] font-bold text-white truncate px-0.5">
-                              {card.name.split(' ')[0]}
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleCardInDeck(card.id)}
-                            title="Remover do Deck"
-                            className="absolute top-0 right-0 w-3.5 h-3.5 rounded-bl bg-red-600/95 text-white flex items-center justify-center cursor-pointer"
-                          >
-                            <X className="w-2.5 h-2.5" />
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-[8px] font-runic text-slate-500">
-                          {idx + 1}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-                {/* 10th cell: Confirm / Save Deck */}
-                <button
-                  type="button"
-                  disabled={playerDeckIds.length !== 9}
-                  onClick={() => {
-                    sfx.click();
-                    setModal(null);
-                  }}
-                  className={[
-                    'aspect-[3/3.4] rounded border flex flex-col items-center justify-center text-center p-0.5 font-runic text-[7.5px] transition',
-                    playerDeckIds.length === 9
-                      ? 'bg-gradient-to-b from-amber-400 to-amber-600 border-amber-200 text-slate-950 cursor-pointer hover:brightness-110'
-                      : 'bg-slate-800/80 border-slate-700 text-slate-500 cursor-not-allowed',
-                  ].join(' ')}
-                >
-                  <Check className="w-4 h-4 mb-0.5" />
-                  <span>PRONTO</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </RunicDialog>
-      )}
-
-      {/* FULL 3D HOLOGRAPHIC CARD INSPECTOR (Marvel Snap Style) */}
-      {inspectedDeckCard && (
-        <CardInspectModal
-          card={inspectedDeckCard}
-          onClose={() => setInspectedDeckCard(null)}
-        />
-      )}
 
       {/* MODAL: MERCADO */}
       {modal === 'market' && (

@@ -69,6 +69,11 @@ export const UI_ASSETS = {
   campaignNodeCompleted: '/Campanha/node_completed.png',
   campaignNodeLocked: '/Campanha/node_locked.png',
   campaignNodeBoss: '/Campanha/node_boss.png',
+
+  // 7. Tela Profissional de Gerenciamento de Decks (Assets opcionais com fallback CSS)
+  bgDeckArmory: '/UI/bg_deck_armory.png',
+  deckSlotEmpty: '/UI/deck_slot_empty.png',
+  deckHeaderBanner: '/UI/deck_header_banner.png',
 } as const;
 
 export const CRYSTAL_ASSETS: Record<Precedence, string> = {
