@@ -214,11 +214,18 @@ export function TitleScreen({
 
   return (
     <div className="relative w-full h-full flex flex-col justify-between overflow-hidden bg-slate-950">
-      {/* Background Terrain */}
-      <img
-        src={previewTerrain.imageUrl}
-        alt={previewTerrain.name}
-        className="absolute inset-0 w-full h-full object-cover scale-105 opacity-85 transition-all duration-700"
+      {/* Background Sanctum (falls back to previewTerrain if missing) */}
+      <AssetImg
+        src={UI_ASSETS.bgMenuHeroSanctum}
+        alt="Santuário do Herói"
+        className="absolute inset-0 w-full h-full object-cover scale-105 opacity-90 transition-all duration-700"
+        fallback={
+          <img
+            src={previewTerrain.imageUrl}
+            alt={previewTerrain.name}
+            className="absolute inset-0 w-full h-full object-cover scale-105 opacity-85 transition-all duration-700"
+          />
+        }
       />
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950/82 via-slate-950/35 to-slate-950/95" />
 

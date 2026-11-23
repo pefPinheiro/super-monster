@@ -1,4 +1,4 @@
-import type { Precedence } from '@super-monster/game-engine';
+import type { HeroEffectStat, Precedence } from '@super-monster/game-engine';
 
 /**
  * Mapa oficial de caminhos dentro da pasta /Assets.
@@ -81,8 +81,26 @@ export const UI_ASSETS = {
   heroSlotArma: '/UI/hero_slot_arma.png',
   heroSlotElmo: '/UI/hero_slot_elmo.png',
   heroSlotBotas: '/UI/hero_slot_botas.png',
-  heroSlotAmuleto: '/UI/hero_slot_amuleto.png',
+  heroSlotAmuleto: '/UI/hero_slot_amuleto.jpg',
+
+  // 9. Ícones de Melhorias / Efeitos do Herói
+  modAtk: '/UI/mod_atk.png',
+  modHp: '/UI/mod_hp.png',
+  modVel: '/UI/mod_vel.png',
+  modShield: '/UI/mod_shield.png',
+  modBurn: '/UI/mod_burn.png',
+  modHeal: '/UI/mod_heal.png',
 } as const;
+
+export const MOD_STAT_ASSETS: Record<HeroEffectStat, string> = {
+  atk: UI_ASSETS.modAtk,
+  hp: UI_ASSETS.modHp,
+  vel: UI_ASSETS.modVel,
+  shield: UI_ASSETS.modShield,
+  heal: UI_ASSETS.modHeal,
+  damage_enemies: UI_ASSETS.modBurn,
+  damage_allies: UI_ASSETS.modBurn,
+};
 
 export const CRYSTAL_ASSETS: Record<Precedence, string> = {
   furia: UI_ASSETS.crystalFuria,

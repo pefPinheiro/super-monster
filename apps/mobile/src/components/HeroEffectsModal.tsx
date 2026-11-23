@@ -11,6 +11,7 @@ import {
   type HeroSlotType,
 } from '@super-monster/game-engine';
 import { Flame, Shield, Sparkles, Swords, X, Zap } from 'lucide-react';
+import { MOD_STAT_ASSETS } from '../assets/assetPaths';
 import { sfx } from '../utils/sfx';
 import { AssetImg } from './AssetImg';
 
@@ -180,7 +181,12 @@ export function HeroEffectsModal({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <SlotIcon className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                        <AssetImg
+                          src={MOD_STAT_ASSETS[item.stat]}
+                          alt={item.stat}
+                          className="w-4 h-4 object-contain shrink-0"
+                          fallback={<SlotIcon className="w-3.5 h-3.5 text-amber-300 shrink-0" />}
+                        />
                         <span className="font-display text-xs text-white truncate">
                           {item.name}
                         </span>

@@ -29,7 +29,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { UI_ASSETS } from '../assets/assetPaths';
+import { MOD_STAT_ASSETS, UI_ASSETS } from '../assets/assetPaths';
 import type { HeroProfileState } from '../utils/heroProfile';
 import { sfx } from '../utils/sfx';
 import { AssetImg } from './AssetImg';
@@ -359,7 +359,7 @@ export function HeroConfigScreen({
                 <AssetImg
                   src={SLOT_ASSET_MAP[slot]}
                   alt=""
-                  className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-15"
+                  className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30"
                   fallback={null}
                 />
                 <div className="relative z-10 flex items-center justify-between gap-0.5">
@@ -503,8 +503,16 @@ export function HeroConfigScreen({
                 return (
                   <div
                     key={item.id}
-                    className={`rounded-2xl border ${rarity.borderClass} ${rarity.bgClass} p-2.5 flex items-center justify-between gap-2`}
+                    className={`rounded-2xl border ${rarity.borderClass} ${rarity.bgClass} p-2.5 flex items-center justify-between gap-2.5`}
                   >
+                    <div className="w-10 h-10 rounded-xl bg-slate-950/80 border border-slate-700/80 p-1 shrink-0 flex items-center justify-center">
+                      <AssetImg
+                        src={MOD_STAT_ASSETS[item.stat]}
+                        alt={item.stat}
+                        className="w-full h-full object-contain"
+                        fallback={<SlotIcon slot={item.slotType} className="w-5 h-5 text-amber-300" />}
+                      />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <SlotIcon
@@ -616,8 +624,16 @@ export function HeroConfigScreen({
               return (
                 <div
                   key={`${tpl.name}-${idx}`}
-                  className={`rounded-2xl border ${rarity.borderClass} ${rarity.bgClass} p-2.5 flex items-center justify-between gap-2`}
+                  className={`rounded-2xl border ${rarity.borderClass} ${rarity.bgClass} p-2.5 flex items-center justify-between gap-2.5`}
                 >
+                  <div className="w-10 h-10 rounded-xl bg-slate-950/80 border border-slate-700/80 p-1 shrink-0 flex items-center justify-center">
+                    <AssetImg
+                      src={MOD_STAT_ASSETS[tpl.stat]}
+                      alt={tpl.stat}
+                      className="w-full h-full object-contain"
+                      fallback={<SlotIcon slot={tpl.slotType} className="w-5 h-5 text-amber-300" />}
+                    />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <SlotIcon
